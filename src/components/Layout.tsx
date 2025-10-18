@@ -13,7 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/redux/actions/loginActions";
-
+import { Outlet } from "react-router-dom";
 interface LayoutProps {
   children: ReactNode;
 }
@@ -25,7 +25,7 @@ const navigation = [
   { name: "Users", href: "/users", icon: Users },
 ];
 
-export function Layout({ children }: LayoutProps) {
+export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -171,7 +171,7 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Page content */}
         <main className="p-4 lg:p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

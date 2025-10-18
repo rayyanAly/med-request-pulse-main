@@ -25,22 +25,16 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route path="*" element={
-            <ProtectedRoute>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/orders/create" element={<CreateOrder />} />
-                  <Route path="/orders/:orderId" element={<OrderDetails />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/users" element={<UsersPage />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
-            </ProtectedRoute>
-          } />
+          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Dashboard />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="orders/create" element={<CreateOrder />} />
+            <Route path="orders/:orderId" element={<OrderDetails />} />
+            <Route path="products" element={<Products />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

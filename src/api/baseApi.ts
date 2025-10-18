@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.DEV ? '/api/api_panel/1.0' : 'https://dashboard.800pharmacy.ae/api_panel/1.0';
+const BASE_URL = import.meta.env.DEV ? '/api/api_panel/1.0' : 'https://dashboard.800pharmacy.ae/api_panel/2.0';
 const PARTNER_ID = import.meta.env.VITE_PARTNER_ID;
 const REF_ID = import.meta.env.VITE_REF_ID;
 

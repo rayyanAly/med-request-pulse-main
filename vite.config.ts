@@ -1,3 +1,5 @@
+// vite.config.ts(dev)
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -25,18 +27,29 @@ export default defineConfig(({ mode }) => ({
 }));
 
 
-// // vite.config.ts
+
+// // vite.config.ts(prod)
+
 // import { defineConfig } from 'vite';
 // import react from '@vitejs/plugin-react-swc';
 // import path from 'path';
 
 // export default defineConfig({
 //   plugins: [react()],
-//   base: '/panel_v2/',                   // app is hosted at domain root
+//   base: '/panel_v2/',                  
 
 //   build: {
 //     outDir: 'dist',
 //     emptyOutDir: true,
+//   },
+//   server: {
+//     proxy: {
+//       '/api': {
+//         target: 'https://dashboard.800pharmacy.ae',
+//         changeOrigin: true,
+//         secure: true,
+//       },
+//     },
 //   },
 //   resolve: {
 //     alias: {

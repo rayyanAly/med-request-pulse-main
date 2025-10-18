@@ -489,18 +489,18 @@ export default function CreateOrder() {
 
       {/* Product Selection Dialog */}
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
-        <DialogContent className="max-w-2xl h-[80vh]">
+        <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Select Product</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="flex-1 overflow-hidden flex flex-col px-1 pt-1">
             <Input
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
+              className="w-full h-9 text-sm mb-4"
             />
-            <div className="flex-1 overflow-auto space-y-2 max-h-96">
+            <div className="flex-1 overflow-auto space-y-2 px-1 pt-2">
               {loadingProducts ? (
                 <div className="text-center py-8">Loading products...</div>
               ) : filteredProducts.length === 0 ? (
@@ -511,7 +511,7 @@ export default function CreateOrder() {
                 filteredProducts.map((product) => (
                   <div
                     key={product.product_id}
-                    className={`p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors ${
+                    className={`p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors mx-1 ${
                       selectedProduct?.product_id === product.product_id ? 'ring-2 ring-primary' : ''
                     }`}
                     onClick={() => setSelectedProduct(product)}
