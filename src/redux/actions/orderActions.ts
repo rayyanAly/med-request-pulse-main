@@ -1,5 +1,5 @@
 import { Dispatch } from 'redux';
-import { fetchOrders, fetchSingleOrder, createOrderDirect } from '../../api/orderApi';
+import { fetchOrders, fetchSingleOrder, createOrder } from '../../api/orderApi';
 import { Order, CreateOrderRequest } from '../../api/types';
 import {
   FETCH_ORDERS_REQUEST,
@@ -99,7 +99,7 @@ export const createNewOrder = (orderData: CreateOrderRequest, files: File[] = []
   return async (dispatch: Dispatch) => {
     dispatch(createOrderRequest());
     try {
-      const result = await createOrderDirect(orderData, files);
+      const result = await createOrder(orderData, files);
       if (result.success) {
         dispatch(createOrderSuccess(result.data));
         return { success: true, data: result.data };

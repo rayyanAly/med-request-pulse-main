@@ -1,63 +1,131 @@
+// 800 Pharmacy API Types
+// Based on Postman collection and actual API responses
+
+// ==================== Auth Types ====================
+
 export interface LoginRequest {
   username: string;
   password: string;
 }
 
 export interface LoginResponse {
-  success: boolean;
-  data?: any;
-  session_token?: string;
+  success: number;
+  error: string;
+  data?: {
+    id: string; // partner_ref_id
+    partner_id: string;
+    partner_session: string;
+    partner_name: string;
+    store_name: string;
+    store_status: string;
+    user_name: string;
+    whatsapp_number?: string | null;
+    store_logo?: string | null;
+    store_phone?: string | null;
+    delivery_charges: number;
+  };
   message?: string;
 }
 
+export interface SessionResponse {
+  data?: {
+    session: string;
+  };
+}
+
+// ==================== API Response Types ====================
+
 export interface ApiResponse<T> {
-  success: boolean;
+  success: number;
+  error: string;
   data?: T;
   message?: string;
 }
 
-export interface OrderAttachment {
-  attachment_url: string;
-  attachment_type: string;
-}
+// ==================== Order Types ====================
 
-export interface OrderActivities {
-  received_at: string | null;
-  accepted_at: string | null;
-  prepared_at: string | null;
-  dispatched: string | null;
-  driver_started_at: string | null;
-  delivered_at: string | null;
-}
-
-export interface Product {
+export interface OrderProduct {
   product_id: number;
   sku: string;
   name: string;
-  unit: string;
-  description: string;
-  manufacturer: string;
-  category_id: number;
-  category_name: string;
+  quantity: number;
   price: number;
-  special: number;
-  image: string;
-  categories_list: ProductCategory[];
+  discount_applied?: number;
+  total: number;
+  image?: string;
 }
 
-export interface ProductCategory {
-  category_id: number;
-  name: string;
-  description: string;
-  meta_title: string;
-  image: string;
+export interface OrderActivity {
+  received_at: string;
+  accepted_at?: string | null;
+  prepared_at?: string | null;
+  dispatched?: string | null;
+  driver_started_at?: string | null;
+  delivered_at?: string | null;
 }
 
-// Cart item - uses qty (not quantity) for backend compatibility
-export interface CartItem {
-  product_id: number;
-  sku: string;
-  qty: number;
+export interface OrderTotal {
+  code: string;
+  title: string;
+  value: number;
+  sort_order: number;
+}
+
+export interface Order {
+  order_id: string;
+  order_id_internal?: string;
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  telephone?: string;
+  payment_method?: string;
+  payment_status?: string;
+  payment_reference?: string | null;
+  shipping_method?: string | null;
+  shipping_lat?: string;
+  shipping_lng?: string;
+  comment?: string;
+  currency_code?: string;
+  currency_value?: number;
+  ip?: string | null;
+  date_added?: string;
+  date_modified?: string;
+  delivery_date?: string;
+  delivery_time?: string;
+  rating?: string;
+  insurance?: number;
+  prescription?: number;
+  order_status?: string;
+  internal_name?: string | null;
+  total?: OrderTotal[];
+  address?: string | null;
+  activities?: OrderActivity;
+  attachments?: Array<{ attachment_url: string; attachment_type: string }>;
+  products?: OrderProduct[];
+  erx?: string;
+  order_status_id?: string;
+  cancel_key?: string;
+  cancel_reason?: string | null;
+  agent_name?: string | null;
+  item_total?: number;
+  a_notes?: string;
+}
+
+export interface OrderStatus {
+  order_id: string;
+  status: string;
+  last_update?: string;
+}
+
+export interface OrderTrack {
+  order_id: string;
+  status: string;
+  driver_name?: string;
+  driver_phone?: string;
+  driver_location?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface CreateOrderRequest {
@@ -68,15 +136,15 @@ export interface CreateOrderRequest {
   building: string;
   unit: string;
   
-  // Products array
+  // Products array (uses CartItem format)
   products: CartItem[];
   
   // Payment method: cash, card, online, pal, paid_already
-  payment_method?: string;
+  payment_method: string;
   
   // Insurance and Prescription flags
-  with_insurance?: boolean;
-  with_prescription?: boolean;
+  with_insurance: boolean;
+  with_prescription: boolean;
   
   // Optional fields
   customer_id?: string;
@@ -85,61 +153,110 @@ export interface CreateOrderRequest {
   notes?: string;
 }
 
-export interface Order {
+export interface CreateOrderResponse {
   order_id: string;
-  order_id_internal: string;
+  customer_id: string;
+  address_id: string;
+  cancel_key: string;
+}
+
+export interface CancelOrderRequest {
+  id: string;
+  cancel_key: string;
+}
+
+export interface CancelOrderResponse {
+  order_id: string;
+  status: string;
+}
+
+// ==================== Customer Types ====================
+
+export interface Customer {
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  telephone?: string;
+  total_orders?: number;
+}
+
+export interface RegisterCustomerRequest {
+  first_name: string;
+  last_name: string;
+  password: string;
+  confirm_password: string;
+  contact_number: string;
+  email?: string;
+}
+
+export interface RegisterCustomerResponse {
+  customer_id: string;
+}
+
+export interface CustomerLoginResponse {
+  customer_id: number;
+  external_id: string;
   firstname: string;
   lastname: string;
   email: string;
-  telephone: string;
-  payment_method: string;
-  payment_status: string;
-  payment_reference: string | null;
-  shipping_method: string | null;
-  shipping_lat: string;
-  shipping_lng: string;
-  comment: string;
-  currency_code: string;
-  currency_value: number;
-  ip: string | null;
-  date_added: string;
-  date_modified: string;
-  delivery_date: string;
-  delivery_time: string;
-  rating: string;
-  insurance: number;
-  prescription: number;
-  order_status: string;
-  total: number;
-  comission: number;
-  partner_name: string | null;
-  item_total: number;
-  received_at: string;
-  accepted_at: string;
-  prepared_at: string;
-  dispatched: string;
-  driver_started_at: string;
-  delivered_at: string;
-  duration: string;
-  agent_name: string | null;
-  attachments?: OrderAttachment[];
-  products?: any[]; // Assuming array of products
-  erx?: string;
-  order_status_id?: string;
-  cancel_key?: string;
-  cancel_reason?: string | null;
-  a_notes?: string;
-  address?: string | null;
-  internal_name?: string | null;
 }
 
-export interface OrdersResponse extends ApiResponse<Order[]> {}
+// ==================== Product Types ====================
 
-export interface SingleOrderResponse extends ApiResponse<Order> {}
+export interface Product {
+  product_id: number;
+  sku: string;
+  name: string;
+  price: number;
+  category_name?: string;
+  unit?: string;
+  description?: string;
+  manufacturer?: string;
+  category_id?: number;
+  image?: string;
+  special?: number;
+  available_stock?: number;
+  prescription_required?: number;
+  currency?: string;
+  pharmacy_generic_name?: string;
+  plus_symptoms?: string;
+}
 
-export interface ProductsResponse extends ApiResponse<Product[]> {}
+export interface ProductStock {
+  name: string;
+  stock_available: boolean;
+  available_qty?: number;
+}
 
-export interface SingleProductResponse extends ApiResponse<Product> {}
+// ==================== Category Types ====================
 
-// Payment method options
+export interface Category {
+  category_id: number;
+  name: string;
+  description?: string;
+  meta_title?: string;
+  image?: string;
+}
+
+// ==================== Stats Types ====================
+
+export interface DashboardStats {
+  total_sale: number;
+  total_orders: number;
+  total_customers: number;
+  average_value: number;
+}
+
+// ==================== Cart Types ====================
+
+export interface CartItem {
+  product_id: number;
+  sku: string;
+  qty: number;
+}
+
+// ==================== Response Types ====================
+
 export type PaymentMethod = 'cash' | 'card' | 'online' | 'pal' | 'paid_already';

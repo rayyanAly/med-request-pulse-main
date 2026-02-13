@@ -1,0 +1,474 @@
+{
+	"info": {
+		"_postman_id": "api-panel-v2",
+		"name": "800 Pharmacy API - Panel V2",
+		"description": "API documentation for 800 Pharmacy Partner Panel V2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://800pharmacy.ae/api_panel/v2",
+			"type": "string"
+		},
+		{
+			"key": "partnerId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "securityCode",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Generate Session",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Partner-Id",
+								"value": "{{partnerId}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Security-Code",
+								"value": "{{securityCode}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/session",
+							"host": ["{{baseUrl}}"],
+							"path": ["session"]
+						},
+						"description": "Generate a session token for API access"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"session\": \"session_token_here\"\n    }\n}"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "List Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders?limit=10&page=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["orders"],
+							"query": [
+								{"key": "limit", "value": "10", "description": "Number of records", "disabled": true},
+								{"key": "page", "value": "1", "description": "Page number", "disabled": true},
+								{"key": "sort", "value": "", "description": "Sort by field", "disabled": true},
+								{"key": "orderby", "value": "", "description": "Sort order", "disabled": true},
+								{"key": "customer", "value": "", "description": "Filter by customer", "disabled": true}
+							]
+						},
+						"description": "Get a list of orders with optional filtering"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": [\n        {\n            \"order_id\": \"ORD123\",\n            \"firstname\": \"John\",\n            \"lastname\": \"Doe\",\n            \"payment_method\": \"Cash On Delivery\",\n            \"total\": 150.00,\n            \"order_status\": \"Pending\",\n            \"date_added\": \"13/02/2026 10:30:00\"\n        }\n    ]\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Single Order",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders?id=ORDER_ID",
+							"host": ["{{baseUrl}}"],
+							"path": ["orders"],
+							"query": [{"key": "id", "value": "ORDER_ID", "description": "Order ID"}]
+						},
+						"description": "Get details of a specific order"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"order_id\": \"ORD123\",\n        \"order_id_internal\": 456,\n        \"firstname\": \"John\",\n        \"lastname\": \"Doe\",\n        \"email\": \"john@example.com\",\n        \"telephone\": \"+971500000000\",\n        \"payment_method\": \"Cash On Delivery\",\n        \"total\": 150.00,\n        \"order_status\": \"Pending\",\n        \"products\": [\n            {\n                \"product_id\": 1,\n                \"name\": \"Paracetamol\",\n                \"quantity\": 2,\n                \"price\": 25.00,\n                \"total\": 50.00\n            }\n        ]\n    }\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "first_name", "value": "Rayyan", "type": "text", "description": "Customer first name (required if no customer_id)"},
+								{"key": "last_name", "value": "Ansari", "type": "text", "description": "Customer last name (required if no customer_id)"},
+								{"key": "contact_number", "value": "+971502056544", "type": "text", "description": "Phone number, min 9 chars"},
+								{"key": "building", "value": "Alqouz", "type": "text", "description": "Building number (required if no address_id)"},
+								{"key": "unit", "value": "800", "type": "text", "description": "Unit/apartment (required if no address_id)"},
+								{"key": "payment_method", "value": "cash", "type": "text", "description": "cash, card, online, pal, paid_already"},
+								{"key": "with_insurance", "value": "0", "type": "text", "description": "0 or 1"},
+								{"key": "with_prescription", "value": "0", "type": "text", "description": "0 or 1"},
+								{"key": "products", "value": "[{\"sku\":\"12345\",\"qty\":1}]", "type": "text", "description": "JSON array with sku and qty fields"}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders/create",
+							"host": ["{{baseUrl}}"],
+							"path": ["orders", "create"]
+						},
+						"description": "Create a new order"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"order_id\": \"ORD123\",\n        \"customer_id\": \"CUST456\",\n        \"address_id\": \"ADDR789\",\n        \"cancel_key\": \"abc123xyz\"\n    }\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Order Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders/status?id=ORDER_ID",
+							"host": ["{{baseUrl}}"],
+							"path": ["orders", "status"],
+							"query": [{"key": "id", "value": "ORDER_ID", "description": "Order ID"}]
+						},
+						"description": "Get the status of an order"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"order_id\": \"ORD123\",\n        \"status\": \"Delivered\",\n        \"last_update\": \"13/02/2026 15:30:00\"\n    }\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Cancel Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "id", "value": "ORDER_ID", "type": "text"},
+								{"key": "cancel_key", "value": "CANCEL_KEY", "type": "text"}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders/cancel",
+							"host": ["{{baseUrl}}"],
+							"path": ["orders", "cancel"]
+						},
+						"description": "Cancel an order"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"order_id\": \"ORD123\",\n        \"status\": \"Cancelled\"\n    }\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Track Order",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders/track?id=ORDER_ID",
+							"host": ["{{baseUrl}}"],
+							"path": ["orders", "track"],
+							"query": [{"key": "id", "value": "ORDER_ID", "description": "Order ID"}]
+						},
+						"description": "Track an order (driver info, location)"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"order_id\": \"ORD123\",\n        \"status\": \"Out for Delivery\",\n        \"driver_name\": \"Ahmed\",\n        \"driver_phone\": \"+971500000000\"\n    }\n}"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Customers",
+			"item": [
+				{
+					"name": "List Customers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/customers?limit=10&page=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["customers"],
+							"query": [
+								{"key": "limit", "value": "10", "disabled": true},
+								{"key": "page", "value": "1", "disabled": true}
+							]
+						},
+						"description": "Get a list of customers"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": [\n        {\n            \"customer_id\": \"CUST123\",\n            \"first_name\": \"John\",\n            \"last_name\": \"Doe\",\n            \"email\": \"john@example.com\",\n            \"phone\": \"+971500000000\",\n            \"total_orders\": 5\n        }\n    ]\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Register Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "first_name", "value": "John", "type": "text", "description": "First name"},
+								{"key": "last_name", "value": "Doe", "type": "text", "description": "Last name"},
+								{"key": "password", "value": "password123", "type": "text", "description": "Password (min 6 chars)"},
+								{"key": "confirm_password", "value": "password123", "type": "text", "description": "Confirm password"},
+								{"key": "contact_number", "value": "+971500000000", "type": "text", "description": "Phone number"},
+								{"key": "email", "value": "john@example.com", "type": "text", "description": "Email (optional)", "disabled": true}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/customers/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["customers", "register"]
+						},
+						"description": "Register a new customer"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"customer_id\": \"CUST123\"\n    }\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Customer Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "username", "value": "john@example.com", "type": "text", "description": "Username or email"},
+								{"key": "password", "value": "password123", "type": "text", "description": "Password"}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/customers/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["customers", "login"]
+						},
+						"description": "Customer login"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"customer_id\": 123,\n        \"external_id\": \"CUST123\",\n        \"firstname\": \"John\",\n        \"lastname\": \"Doe\",\n        \"email\": \"john@example.com\"\n    }\n}"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "List Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/products?limit=10&page=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["products"],
+							"query": [
+								{"key": "category", "value": "1", "description": "Category ID", "disabled": true},
+								{"key": "limit", "value": "10", "disabled": true},
+								{"key": "page", "value": "1", "disabled": true}
+							]
+						},
+						"description": "Get a list of products"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": [\n        {\n            \"product_id\": 1,\n            \"sku\": 12345,\n            \"name\": \"Paracetamol 500mg\",\n            \"price\": 25.00,\n            \"category_name\": \"Pain Relief\"\n        }\n    ]\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Check Stock",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/products/showstock?sku=12345",
+							"host": ["{{baseUrl}}"],
+							"path": ["products", "showstock"],
+							"query": [{"key": "sku", "value": "12345", "description": "Product SKU"}]
+						},
+						"description": "Check stock availability for a product"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"name\": \"Paracetamol 500mg\",\n        \"stock_available\": true\n    }\n}"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Stats",
+			"item": [
+				{
+					"name": "Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["stats"]
+						},
+						"description": "Get dashboard statistics"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": {\n        \"total_sale\": 15000.50,\n        \"total_orders\": 150,\n        \"total_customers\": 75,\n        \"average_value\": 100.00\n    }\n}"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "List Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["categories"]
+						},
+						"description": "Get a list of product categories"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"data\": [\n        {\n            \"category_id\": 1,\n            \"name\": \"Pain Relief\"\n        }\n    ]\n}"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

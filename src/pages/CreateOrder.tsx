@@ -22,17 +22,19 @@ import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProducts } from "@/api/productApi";
+import { fetchAllProducts } from "@/redux/actions/productActions";
 import { createNewOrder, createOrderReset } from "@/redux/actions/orderActions";
 import { Product, CartItem, PaymentMethod } from "@/api/types";
 import { RootState } from "@/redux/store";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 export default function CreateOrder() {
   const dispatch = useDispatch<any>();
   const navigate = useNavigate();
   
-  // Redux state
   const { createOrderLoading, createOrderSuccess, createOrderError } = useSelector((state: RootState) => state.orders);
+  const { products: reduxProducts, loading: productsLoading } = useSelector((state: RootState) => state.products);
 
   // Customer Information
   const [firstName, setFirstName] = useState("");
@@ -53,8 +55,6 @@ export default function CreateOrder() {
   // Files and Products
   const [files, setFiles] = useState<File[]>([]);
   const [previewFile, setPreviewFile] = useState<{ name: string; url: string } | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -73,6 +73,13 @@ export default function CreateOrder() {
     { code: "+973", country: "BH", flag: "🇧🇭", name: "Bahrain" },
   ];
 
+  // Load products on mount
+  useEffect(() => {
+    if (reduxProducts.length === 0) {
+      dispatch(fetchAllProducts());
+    }
+  }, [dispatch, reduxProducts.length]);
+
   // Handle successful order creation
   useEffect(() => {
     if (createOrderSuccess) {
@@ -85,37 +92,43 @@ export default function CreateOrder() {
     }
   }, [createOrderSuccess, createOrderError, dispatch, navigate]);
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      setLoadingProducts(true);
-      try {
-        const response = await fetchProducts();
-        if (response.success && response.data) {
-          setProducts(response.data);
-        } else {
-          toast.error("Failed to load products");
-        }
-      } catch (error) {
-        toast.error("Error loading products");
-      } finally {
-        setLoadingProducts(false);
-      }
-    };
-    loadProducts();
-  }, []);
+  // Filter products - exclude out of stock
+  const availableProducts = reduxProducts.filter((product: Product) => 
+    (product.available_stock || 0) > 0
+  );
 
-  const filteredProducts = products.filter(product =>
+  const filteredProducts = availableProducts.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase())
+    product.sku.toString().includes(searchTerm.toLowerCase())
   );
 
   const addToCart = () => {
     if (!selectedProduct) return;
+    
+    // Check stock
+    const stock = selectedProduct.available_stock || 0;
+    if (quantity > stock) {
+      toast.error(`Only ${stock} items available in stock`);
+      return;
+    }
+
+    // Auto-enable prescription if product requires it
+    if (selectedProduct.prescription_required === 1 && !withPrescription) {
+      setWithPrescription(true);
+      toast.info("Prescription required for this product - enabled automatically");
+    }
+
     const existing = cart.find(item => item.product_id === selectedProduct.product_id);
     if (existing) {
+      const newQty = existing.qty + quantity;
+      const stock = selectedProduct.available_stock || 0;
+      if (newQty > stock) {
+        toast.error(`Only ${stock} items available in stock`);
+        return;
+      }
       setCart(cart.map(item =>
         item.product_id === selectedProduct.product_id
-          ? { ...item, qty: item.qty + quantity }
+          ? { ...item, qty: newQty }
           : item
       ));
     } else {
@@ -137,6 +150,17 @@ export default function CreateOrder() {
   };
 
   const updateQuantity = (productId: number, newQty: number) => {
+    const cartItem = cart.find(item => item.product_id === productId);
+    if (!cartItem) return;
+    
+    const product = reduxProducts.find((p: Product) => p.product_id === productId);
+    const stock = product?.available_stock || 0;
+    
+    if (newQty > stock) {
+      toast.error(`Only ${stock} items available in stock`);
+      return;
+    }
+    
     if (newQty <= 0) {
       removeFromCart(productId);
       return;
@@ -168,6 +192,12 @@ export default function CreateOrder() {
     setPreviewFile(null);
   };
 
+  // Check if cart contains Rx products
+  const cartHasRxProducts = cart.some(item => {
+    const product = reduxProducts.find((p: Product) => p.product_id === item.product_id);
+    return product?.prescription_required === 1;
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -194,6 +224,11 @@ export default function CreateOrder() {
     }
     if (!unit.trim()) {
       toast.error("Please enter unit/apartment number");
+      return;
+    }
+    // Check if prescription is required for cart
+    if (cartHasRxProducts && !withPrescription) {
+      toast.error("Prescription is required for products in cart");
       return;
     }
     if (withPrescription && files.length === 0 && !erxNo.trim()) {
@@ -228,8 +263,17 @@ export default function CreateOrder() {
     navigate("/orders");
   };
 
+  // Calculate cart total
+  const cartTotal = cart.reduce((sum, item) => {
+    const product = reduxProducts.find((p: Product) => p.product_id === item.product_id);
+    return sum + (product?.price || 0) * item.qty;
+  }, 0);
+
+  const deliveryCharges = 5.75;
+  const orderTotal = cartTotal + deliveryCharges;
+
   return (
-    <div className="space-y-3 h-full">
+    <div className="space-y-4 h-full">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold tracking-tight">Create New Order</h1>
@@ -238,10 +282,10 @@ export default function CreateOrder() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Column */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Customer Information */}
             <Card>
               <CardHeader className="pb-2 pt-4 px-5">
@@ -397,13 +441,20 @@ export default function CreateOrder() {
                 {/* Prescription Toggle */}
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="prescription" className="text-xs">Prescription Required *</Label>
-                    <p className="text-xs text-muted-foreground">Order needs prescription upload</p>
+                    <Label htmlFor="prescription" className="text-xs">Prescription Required</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {cartHasRxProducts ? (
+                        <span className="text-amber-600 font-medium">Required for cart items</span>
+                      ) : (
+                        "Order needs prescription upload"
+                      )}
+                    </p>
                   </div>
                   <Switch
                     id="prescription"
                     checked={withPrescription}
                     onCheckedChange={setWithPrescription}
+                    disabled={cartHasRxProducts}
                   />
                 </div>
 
@@ -425,7 +476,7 @@ export default function CreateOrder() {
           </div>
 
           {/* Right Column */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Documents */}
             {withPrescription && (
               <Card>
@@ -520,15 +571,23 @@ export default function CreateOrder() {
                   Add Product
                 </Button>
                 {cart.length === 0 ? (
-                  <div className="text-center text-xs text-muted-foreground">
+                  <div className="text-center text-xs text-muted-foreground py-4">
                     No products in cart
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
                     {cart.map((item) => {
-                      const product = products.find(p => p.product_id === item.product_id);
+                      const product = reduxProducts.find((p: Product) => p.product_id === item.product_id);
                       return (
                         <div key={item.product_id} className="flex items-center gap-3 p-2 border border-border rounded-lg">
+                          <img
+                            src={product?.image || "/placeholder.svg"}
+                            alt={product?.name}
+                            className="w-10 h-10 object-contain rounded bg-muted"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate">{product?.name}</p>
                             <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
@@ -567,6 +626,22 @@ export default function CreateOrder() {
                         </div>
                       );
                     })}
+                    
+                    {/* Cart Summary */}
+                    <div className="border-t border-border pt-2 mt-2 space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>AED {cartTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Delivery</span>
+                        <span>AED {deliveryCharges.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-base pt-1">
+                        <span>Total</span>
+                        <span>AED {orderTotal.toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -625,39 +700,60 @@ export default function CreateOrder() {
               className="w-full h-9 text-sm mb-4"
             />
             <div className="flex-1 overflow-auto space-y-2 px-1 pt-2">
-              {loadingProducts ? (
-                <div className="text-center py-8">Loading products...</div>
+              {productsLoading ? (
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="p-3 border border-border rounded-lg">
+                      <Skeleton className="h-12 w-full" />
+                    </div>
+                  ))}
+                </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchTerm ? "No products found matching your search" : "No products available"}
                 </div>
               ) : (
-                filteredProducts.map((product) => (
-                  <div
-                    key={product.product_id}
-                    className={`p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors mx-1 ${
-                      selectedProduct?.product_id === product.product_id ? 'ring-2 ring-primary' : ''
-                    }`}
-                    onClick={() => setSelectedProduct(product)}
-                  >
-                    <div className="flex gap-3">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-12 h-12 object-cover rounded"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder.svg';
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">{product.name}</h4>
-                        <p className="text-xs text-muted-foreground truncate">SKU: {product.sku}</p>
-                        <p className="text-xs text-muted-foreground truncate">{product.description}</p>
-                        <p className="text-sm font-semibold text-primary">AED {product.price}</p>
+                filteredProducts.map((product) => {
+                  const inStock = (product.available_stock || 0) > 0;
+                  return (
+                    <div
+                      key={product.product_id}
+                      className={`p-3 border border-border rounded-lg cursor-pointer transition-colors mx-1 ${
+                        selectedProduct?.product_id === product.product_id ? 'ring-2 ring-primary' : ''
+                      } ${!inStock ? 'opacity-50' : 'hover:bg-muted'}`}
+                      onClick={() => inStock && setSelectedProduct(product)}
+                    >
+                      <div className="flex gap-3">
+                        <img
+                          src={product.image || "/placeholder.svg"}
+                          alt={product.name}
+                          className="w-14 h-14 object-contain rounded bg-muted"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h4 className="font-medium text-sm truncate">{product.name}</h4>
+                              <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+                              <p className="text-xs text-muted-foreground">{product.unit}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-primary">AED {product.price.toFixed(2)}</p>
+                              <p className={`text-xs ${inStock ? 'text-green-600' : 'text-red-500'}`}>
+                                {inStock ? `In Stock: ${product.available_stock}` : 'Out of Stock'}
+                              </p>
+                            </div>
+                          </div>
+                          {product.prescription_required === 1 && (
+                            <Badge variant="secondary" className="text-xs mt-1">Rx Required</Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -685,6 +781,9 @@ export default function CreateOrder() {
                   >
                     <PlusIcon className="h-3 w-3" />
                   </Button>
+                  <span className="text-xs text-muted-foreground">
+                    (Max: {selectedProduct.available_stock || 0})
+                  </span>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
@@ -702,3 +801,4 @@ export default function CreateOrder() {
     </div>
   );
 }
+
