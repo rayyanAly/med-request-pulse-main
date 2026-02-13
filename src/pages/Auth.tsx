@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { loginUser } from "@/redux/actions/loginActions";
+import { loginUser, LoginData } from "@/redux/actions/loginActions";
 import logo from "@/assets/800_Pharmacy_Logo.png";
 
 const loginSchema = z.object({
@@ -18,7 +19,7 @@ const loginSchema = z.object({
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { loading, user, error } = useSelector((state: any) => state.login);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -47,7 +48,7 @@ const Auth = () => {
     e.preventDefault();
 
     try {
-      const validatedData = loginSchema.parse({ username: loginUsername, password: loginPassword });
+      const validatedData = loginSchema.parse({ username: loginUsername, password: loginPassword }) as LoginData;
 
       dispatch(loginUser(validatedData));
     } catch (error) {

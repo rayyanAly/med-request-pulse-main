@@ -21,18 +21,19 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 import { fetchOrderById } from "@/redux/actions/orderActions";
 
 export default function OrderDetails() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { singleOrder, loading, error } = useSelector((state: any) => state.orders);
   const [previewDocument, setPreviewDocument] = useState<string | null>(null);
 
   useEffect(() => {
     if (orderId) {
-      (dispatch as any)(fetchOrderById(orderId));
+      dispatch(fetchOrderById(orderId));
     }
   }, [dispatch, orderId]);
 

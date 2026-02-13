@@ -11,33 +11,28 @@ import {
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Order as ApiOrder } from "@/api/types";
+import { Order as ApiOrder, OrderTotal, OrderListItem, OrdersTableProps } from "@/api/types";
 
-interface Order {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  value: number;
-  status: string;
-  dateTime: string;
-  preparedBy?: string;
-  preparedAt?: string;
-  dispatchedAt?: string;
-  deliveredAt?: string;
-}
+const mapApiOrderToOrder = (apiOrder: ApiOrder): OrderListItem => {
+  // Calculate total from OrderTotal array
+  const totalValue =
+    apiOrder.total && Array.isArray(apiOrder.total)
+      ? apiOrder.total.reduce((sum: number, item: OrderTotal) => sum + item.value, 0)
+      : 0;
 
-const mapApiOrderToOrder = (apiOrder: ApiOrder): Order => ({
-  id: `#${apiOrder.order_id_internal}`,
-  customerName: `${apiOrder.firstname} ${apiOrder.lastname}`,
-  customerPhone: apiOrder.telephone,
-  value: apiOrder.total,
-  status: apiOrder.order_status,
-  dateTime: apiOrder.date_added,
-  preparedBy: apiOrder.agent_name || undefined,
-  preparedAt: apiOrder.prepared_at || undefined,
-  dispatchedAt: apiOrder.dispatched || undefined,
-  deliveredAt: apiOrder.delivered_at || undefined,
-});
+  return {
+    id: `#${apiOrder.order_id_internal}`,
+    customerName: `${apiOrder.firstname} ${apiOrder.lastname}`,
+    customerPhone: apiOrder.telephone,
+    value: totalValue,
+    status: apiOrder.order_status,
+    dateTime: apiOrder.date_added,
+    preparedBy: apiOrder.agent_name || undefined,
+    preparedAt: apiOrder.activities?.prepared_at || undefined,
+    dispatchedAt: apiOrder.activities?.dispatched || undefined,
+    deliveredAt: apiOrder.activities?.delivered_at || undefined,
+  };
+};
 
 const getStatusColor = (status: string) => {
   const statusMap: Record<string, string> = {
@@ -52,25 +47,30 @@ const getStatusColor = (status: string) => {
   return statusMap[status] || "bg-gray-100 text-gray-800";
 };
 
-interface OrdersTableProps {
-  statusFilter: string;
-}
-
 export function OrdersTable({ statusFilter }: OrdersTableProps) {
   const { orders } = useSelector((state: any) => state.orders);
   const mappedOrders = orders.map(mapApiOrderToOrder);
 
-  const filteredOrders = statusFilter === "all"
-    ? mappedOrders
-    : mappedOrders.filter(order =>
-        statusFilter === "new" ? order.status === "New Order" :
-        statusFilter === "process" ? order.status === "Under Process" :
-        statusFilter === "ready" ? order.status === "Ready for Dispatch" :
-        statusFilter === "dispatch" ? order.status === "Dispatch" :
-        statusFilter === "delivered" ? order.status === "Delivered" :
-        statusFilter === "canceled" ? order.status === "Canceled" :
-        statusFilter === "hold" ? order.status === "On Hold" : true
-      );
+  const filteredOrders =
+    statusFilter === "all"
+      ? mappedOrders
+      : mappedOrders.filter((order) =>
+          statusFilter === "new"
+            ? order.status === "New Order"
+            : statusFilter === "process"
+            ? order.status === "Under Process"
+            : statusFilter === "ready"
+            ? order.status === "Ready for Dispatch"
+            : statusFilter === "dispatch"
+            ? order.status === "Dispatch"
+            : statusFilter === "delivered"
+            ? order.status === "Delivered"
+            : statusFilter === "canceled"
+            ? order.status === "Canceled"
+            : statusFilter === "hold"
+            ? order.status === "On Hold"
+            : true
+        );
 
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm">
@@ -96,12 +96,21 @@ export function OrdersTable({ statusFilter }: OrdersTableProps) {
               <TableCell>
                 <div>
                   <div className="font-medium">{order.customerName}</div>
-                  <div className="text-xs text-muted-foreground">{order.customerPhone}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {order.customerPhone}
+                  </div>
                 </div>
               </TableCell>
-              <TableCell>{order.value.toFixed(2)}</TableCell>
               <TableCell>
-                <Badge className={getStatusColor(order.status)} variant="secondary">
+                {typeof order.value === "number"
+                  ? order.value.toFixed(2)
+                  : order.value}
+              </TableCell>
+              <TableCell>
+                <Badge
+                  className={getStatusColor(order.status)}
+                  variant="secondary"
+                >
                   {order.status}
                 </Badge>
               </TableCell>
@@ -121,7 +130,7 @@ export function OrdersTable({ statusFilter }: OrdersTableProps) {
           ))}
         </TableBody>
       </Table>
-      
+
       {filteredOrders.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           No orders found for this filter

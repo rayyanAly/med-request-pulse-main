@@ -3,13 +3,14 @@ import { Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OrdersTable } from "@/components/OrdersTable";
+import { OrdersTable } from "@/components/orders/OrdersTable";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 import { fetchAllOrders } from "@/redux/actions/orderActions";
 
 export default function Orders() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { loading, error } = useSelector((state: any) => state.orders);
   const [statusFilter, setStatusFilter] = useState("new");
   const [searchTerm, setSearchTerm] = useState("");

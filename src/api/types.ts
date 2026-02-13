@@ -257,6 +257,38 @@ export interface CartItem {
   qty: number;
 }
 
+// ==================== UI Types ====================
+
+export interface OrderListItem {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  value: number;
+  status: string;
+  dateTime: string;
+  preparedBy?: string;
+  preparedAt?: string;
+  dispatchedAt?: string;
+  deliveredAt?: string;
+}
+
 // ==================== Response Types ====================
 
 export type PaymentMethod = 'cash' | 'card' | 'online' | 'pal' | 'paid_already';
+
+// ==================== Component Props Types ====================
+
+export interface OrdersTableProps {
+  statusFilter: string;
+}
+
+export interface StatCardProps {
+  title: string;
+  value: string | number;
+  change?: number;
+  trend?: "up" | "down";
+  icon: React.ElementType;
+  prefix?: string;
+  suffix?: string;
+  loading?: boolean;
+}

@@ -1,6 +1,6 @@
-import { Dispatch } from 'redux';
-import { fetchOrders, fetchSingleOrder, createOrder } from '../../api/orderApi';
-import { Order, CreateOrderRequest } from '../../api/types';
+import { Dispatch } from "redux";
+import { fetchOrders, fetchSingleOrder, createOrder, fetchDashboardStats } from "@/api/orderApi";
+import { Order, CreateOrderRequest } from "@/api/types";
 import {
   FETCH_ORDERS_REQUEST,
   FETCH_ORDERS_SUCCESS,
@@ -12,7 +12,7 @@ import {
   CREATE_ORDER_SUCCESS,
   CREATE_ORDER_FAILURE,
   CREATE_ORDER_RESET,
-} from '../constants/orderConstants';
+} from "../constants/orderConstants";
 
 export const fetchOrdersRequest = () => ({
   type: FETCH_ORDERS_REQUEST,
@@ -66,15 +66,21 @@ export const fetchAllOrders = () => {
     try {
       const result = await fetchOrders();
       if (result.success) {
-        const orders = Array.isArray(result.data) ? result.data : result.data ? [result.data] : [];
+        const orders = Array.isArray(result.data)
+          ? result.data
+          : result.data
+          ? [result.data]
+          : [];
         dispatch(fetchOrdersSuccess(orders));
       } else {
-        console.error('Failed to fetch orders:', result.message);
-        dispatch(fetchOrdersFailure(result.message || 'Failed to fetch orders'));
+        console.error("Failed to fetch orders:", result.message);
+        dispatch(
+          fetchOrdersFailure(result.message || "Failed to fetch orders")
+        );
       }
     } catch (error: any) {
-      console.error('Network error fetching orders:', error);
-      dispatch(fetchOrdersFailure(error.message || 'Network error'));
+      console.error("Network error fetching orders:", error);
+      dispatch(fetchOrdersFailure(error.message || "Network error"));
     }
   };
 };
@@ -87,15 +93,20 @@ export const fetchOrderById = (orderId: string) => {
       if (result.success) {
         dispatch(fetchSingleOrderSuccess(result.data!));
       } else {
-        dispatch(fetchSingleOrderFailure(result.message || 'Failed to fetch order'));
+        dispatch(
+          fetchSingleOrderFailure(result.message || "Failed to fetch order")
+        );
       }
     } catch (error: any) {
-      dispatch(fetchSingleOrderFailure(error.message || 'Network error'));
+      dispatch(fetchSingleOrderFailure(error.message || "Network error"));
     }
   };
 };
 
-export const createNewOrder = (orderData: CreateOrderRequest, files: File[] = []) => {
+export const createNewOrder = (
+  orderData: CreateOrderRequest,
+  files: File[] = []
+) => {
   return async (dispatch: Dispatch) => {
     dispatch(createOrderRequest());
     try {
@@ -104,11 +115,25 @@ export const createNewOrder = (orderData: CreateOrderRequest, files: File[] = []
         dispatch(createOrderSuccess(result.data));
         return { success: true, data: result.data };
       } else {
-        dispatch(createOrderFailure(result.message || 'Failed to create order'));
+        dispatch(createOrderFailure(result.message || "Failed to create order"));
         return { success: false, message: result.message };
       }
     } catch (error: any) {
-      dispatch(createOrderFailure(error.message || 'Network error'));
+      dispatch(createOrderFailure(error.message || "Network error"));
+      return { success: false, message: error.message };
+    }
+  };
+};
+
+export const loadDashboardStats = () => {
+  return async (dispatch: Dispatch) => {
+    try {
+      const result = await fetchDashboardStats();
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+      return { success: false, message: result.message };
+    } catch (error: any) {
       return { success: false, message: error.message };
     }
   };

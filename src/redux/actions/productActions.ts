@@ -1,6 +1,6 @@
-import { Dispatch } from 'redux';
-import { fetchProducts, fetchCategories } from '../../api/productApi';
-import { Product, Category } from '../../api/types';
+import { Dispatch } from "redux";
+import { fetchProducts, fetchCategories } from "@/api/productApi";
+import { Product, Category } from "@/api/types";
 import {
   FETCH_PRODUCTS_REQUEST,
   FETCH_PRODUCTS_SUCCESS,
@@ -8,7 +8,7 @@ import {
   FETCH_CATEGORIES_REQUEST,
   FETCH_CATEGORIES_SUCCESS,
   FETCH_CATEGORIES_FAILURE,
-} from '../constants/productConstants';
+} from "../constants/productConstants";
 
 export const fetchProductsRequest = () => ({
   type: FETCH_PRODUCTS_REQUEST,
@@ -38,7 +38,9 @@ export const fetchCategoriesFailure = (error: string) => ({
   payload: error,
 });
 
-export const fetchAllProducts = (filters?: { category?: number; limit?: number; page?: number }) => {
+export const fetchAllProducts = (
+  filters?: { category?: number; limit?: number; page?: number }
+) => {
   return async (dispatch: Dispatch) => {
     dispatch(fetchProductsRequest());
     try {
@@ -46,10 +48,12 @@ export const fetchAllProducts = (filters?: { category?: number; limit?: number; 
       if (result.success && result.data) {
         dispatch(fetchProductsSuccess(result.data));
       } else {
-        dispatch(fetchProductsFailure(result.error || 'Failed to fetch products'));
+        dispatch(
+          fetchProductsFailure(result.error || "Failed to fetch products")
+        );
       }
     } catch (error: any) {
-      dispatch(fetchProductsFailure(error.message || 'Network error'));
+      dispatch(fetchProductsFailure(error.message || "Network error"));
     }
   };
 };
@@ -62,10 +66,12 @@ export const fetchAllCategories = () => {
       if (result.success && result.data) {
         dispatch(fetchCategoriesSuccess(result.data));
       } else {
-        dispatch(fetchCategoriesFailure(result.error || 'Failed to fetch categories'));
+        dispatch(
+          fetchCategoriesFailure(result.error || "Failed to fetch categories")
+        );
       }
     } catch (error: any) {
-      dispatch(fetchCategoriesFailure(error.message || 'Network error'));
+      dispatch(fetchCategoriesFailure(error.message || "Network error"));
     }
   };
 };
