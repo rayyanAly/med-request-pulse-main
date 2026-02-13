@@ -32,7 +32,7 @@ export interface OrderActivities {
 
 export interface Product {
   product_id: number;
-  sku: number;
+  sku: string;
   name: string;
   unit: string;
   description: string;
@@ -53,21 +53,36 @@ export interface ProductCategory {
   image: string;
 }
 
-export interface CreateOrderRequest {
-  customer_id?: string;
-  first_name?: string;
-  last_name?: string;
-  contact_number?: string;
-  eid_no?: string;
-  erx_no?: string;
-  products: OrderProduct[];
-  delivery_address: string;
-  notes?: string;
+// Cart item - uses qty (not quantity) for backend compatibility
+export interface CartItem {
+  product_id: number;
+  sku: string;
+  qty: number;
 }
 
-export interface OrderProduct {
-  product_id: number;
-  quantity: number;
+export interface CreateOrderRequest {
+  // Required fields
+  first_name: string;
+  last_name: string;
+  contact_number: string;
+  building: string;
+  unit: string;
+  
+  // Products array
+  products: CartItem[];
+  
+  // Payment method: cash, card, online, pal, paid_already
+  payment_method?: string;
+  
+  // Insurance and Prescription flags
+  with_insurance?: boolean;
+  with_prescription?: boolean;
+  
+  // Optional fields
+  customer_id?: string;
+  eid_no?: string;
+  erx?: string;
+  notes?: string;
 }
 
 export interface Order {
@@ -125,3 +140,6 @@ export interface SingleOrderResponse extends ApiResponse<Order> {}
 export interface ProductsResponse extends ApiResponse<Product[]> {}
 
 export interface SingleProductResponse extends ApiResponse<Product> {}
+
+// Payment method options
+export type PaymentMethod = 'cash' | 'card' | 'online' | 'pal' | 'paid_already';

@@ -18,31 +18,47 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "@/api/productApi";
-import { createOrder } from "@/api/orderApi";
-import { Product, OrderProduct } from "@/api/types";
+import { createNewOrder, createOrderReset } from "@/redux/actions/orderActions";
+import { Product, CartItem, PaymentMethod } from "@/api/types";
+import { RootState } from "@/redux/store";
 
 export default function CreateOrder() {
+  const dispatch = useDispatch<any>();
   const navigate = useNavigate();
+  
+  // Redux state
+  const { createOrderLoading, createOrderSuccess, createOrderError } = useSelector((state: RootState) => state.orders);
+
+  // Customer Information
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [countryCode, setCountryCode] = useState("+971");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [building, setBuilding] = useState("");
+  const [unit, setUnit] = useState("");
   const [eidNo, setEidNo] = useState("");
-  const [erxNo, setErxNo] = useState("");
   const [notes, setNotes] = useState("");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
+  
+  // Order Options
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [withInsurance, setWithInsurance] = useState(false);
+  const [withPrescription, setWithPrescription] = useState(false);
+  const [erxNo, setErxNo] = useState("");
+  
+  // Files and Products
   const [files, setFiles] = useState<File[]>([]);
   const [previewFile, setPreviewFile] = useState<{ name: string; url: string } | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
-  const [cart, setCart] = useState<OrderProduct[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const countryCodes = [
@@ -56,6 +72,18 @@ export default function CreateOrder() {
     { code: "+968", country: "OM", flag: "🇴🇲", name: "Oman" },
     { code: "+973", country: "BH", flag: "🇧🇭", name: "Bahrain" },
   ];
+
+  // Handle successful order creation
+  useEffect(() => {
+    if (createOrderSuccess) {
+      toast.success("Order created successfully!");
+      dispatch(createOrderReset());
+      navigate("/orders");
+    }
+    if (createOrderError) {
+      toast.error(createOrderError);
+    }
+  }, [createOrderSuccess, createOrderError, dispatch, navigate]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -87,11 +115,15 @@ export default function CreateOrder() {
     if (existing) {
       setCart(cart.map(item =>
         item.product_id === selectedProduct.product_id
-          ? { ...item, quantity: item.quantity + quantity }
+          ? { ...item, qty: item.qty + quantity }
           : item
       ));
     } else {
-      setCart([...cart, { product_id: selectedProduct.product_id, quantity }]);
+      setCart([...cart, { 
+        product_id: selectedProduct.product_id, 
+        sku: selectedProduct.sku, 
+        qty: quantity 
+      }]);
     }
     setShowProductDialog(false);
     setSelectedProduct(null);
@@ -104,13 +136,13 @@ export default function CreateOrder() {
     setCart(cart.filter(item => item.product_id !== productId));
   };
 
-  const updateQuantity = (productId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
+  const updateQuantity = (productId: number, newQty: number) => {
+    if (newQty <= 0) {
       removeFromCart(productId);
       return;
     }
     setCart(cart.map(item =>
-      item.product_id === productId ? { ...item, quantity: newQuantity } : item
+      item.product_id === productId ? { ...item, qty: newQty } : item
     ));
   };
 
@@ -138,42 +170,61 @@ export default function CreateOrder() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
     if (cart.length === 0) {
       toast.error("Please add at least one product to the cart");
       return;
     }
-    if (!deliveryAddress.trim()) {
-      toast.error("Please enter delivery address");
+    if (!firstName.trim()) {
+      toast.error("Please enter first name");
+      return;
+    }
+    if (!lastName.trim()) {
+      toast.error("Please enter last name");
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      toast.error("Please enter contact number");
+      return;
+    }
+    if (!building.trim()) {
+      toast.error("Please enter building name/number");
+      return;
+    }
+    if (!unit.trim()) {
+      toast.error("Please enter unit/apartment number");
+      return;
+    }
+    if (withPrescription && files.length === 0 && !erxNo.trim()) {
+      toast.error("Please upload a prescription file or enter eRX number");
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const orderData = {
-        first_name: firstName,
-        last_name: lastName,
-        contact_number: `${countryCode}${phoneNumber}`,
-        eid_no: eidNo || undefined,
-        erx_no: erxNo || undefined,
-        products: cart,
-        delivery_address: deliveryAddress,
-        notes: notes || undefined,
-      };
-      const response = await createOrder(orderData);
-      if (response.success) {
-        toast.success("Order created successfully!");
-        navigate("/orders");
-      } else {
-        toast.error(response.message || "Failed to create order");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Error creating order");
-    } finally {
-      setSubmitting(false);
-    }
+    const orderData = {
+      first_name: firstName,
+      last_name: lastName,
+      contact_number: `${countryCode}${phoneNumber}`,
+      building: building,
+      unit: unit,
+      payment_method: paymentMethod,
+      with_insurance: withInsurance,
+      with_prescription: withPrescription,
+      products: cart.map(item => ({
+        product_id: item.product_id,
+        sku: item.sku,
+        qty: item.qty
+      })),
+      eid_no: eidNo || undefined,
+      erx: withPrescription ? erxNo : undefined,
+      notes: notes || undefined,
+    };
+    
+    dispatch(createNewOrder(orderData, files));
   };
 
   const handleCancel = () => {
+    dispatch(createOrderReset());
     navigate("/orders");
   };
 
@@ -253,6 +304,32 @@ export default function CreateOrder() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="building" className="text-xs">Building *</Label>
+                    <Input
+                      id="building"
+                      value={building}
+                      onChange={(e) => setBuilding(e.target.value)}
+                      placeholder="Building name/no."
+                      required
+                      className="h-9 text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="unit" className="text-xs">Unit/Apt *</Label>
+                    <Input
+                      id="unit"
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      placeholder="Unit/Apartment no."
+                      required
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label htmlFor="eid" className="text-xs">EID No</Label>
                   <Input
@@ -260,17 +337,6 @@ export default function CreateOrder() {
                     value={eidNo}
                     onChange={(e) => setEidNo(e.target.value)}
                     placeholder="Enter Emirates ID number"
-                    className="h-9 text-sm"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="erx" className="text-xs">eRX No</Label>
-                  <Input
-                    id="erx"
-                    value={erxNo}
-                    onChange={(e) => setErxNo(e.target.value)}
-                    placeholder="Enter eRX number"
                     className="h-9 text-sm"
                   />
                 </div>
@@ -286,19 +352,74 @@ export default function CreateOrder() {
                     className="text-sm resize-none"
                   />
                 </div>
+              </CardContent>
+            </Card>
 
+            {/* Order Options */}
+            <Card>
+              <CardHeader className="pb-2 pt-4 px-5">
+                <CardTitle className="text-base">Order Options</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4 px-5 space-y-4">
+                {/* Payment Method */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="deliveryAddress" className="text-xs">Delivery Address *</Label>
-                  <Textarea
-                    id="deliveryAddress"
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                    placeholder="Enter delivery address..."
-                    rows={2}
-                    required
-                    className="text-sm resize-none"
+                  <Label htmlFor="payment" className="text-xs">Payment Method *</Label>
+                  <Select 
+                    value={paymentMethod} 
+                    onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash on Delivery</SelectItem>
+                      <SelectItem value="card">Card on Delivery</SelectItem>
+                      <SelectItem value="online">Online Payment</SelectItem>
+                      <SelectItem value="pal">PAL Pay</SelectItem>
+                      <SelectItem value="paid_already">Paid Already</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Insurance Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="insurance" className="text-xs">Insurance</Label>
+                    <p className="text-xs text-muted-foreground">Order has insurance coverage</p>
+                  </div>
+                  <Switch
+                    id="insurance"
+                    checked={withInsurance}
+                    onCheckedChange={setWithInsurance}
                   />
                 </div>
+
+                {/* Prescription Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="prescription" className="text-xs">Prescription Required *</Label>
+                    <p className="text-xs text-muted-foreground">Order needs prescription upload</p>
+                  </div>
+                  <Switch
+                    id="prescription"
+                    checked={withPrescription}
+                    onCheckedChange={setWithPrescription}
+                  />
+                </div>
+
+                {/* eRX Number (conditional) */}
+                {withPrescription && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="erx" className="text-xs">eRX Number</Label>
+                    <Input
+                      id="erx"
+                      value={erxNo}
+                      onChange={(e) => setErxNo(e.target.value)}
+                      placeholder="Enter eRX number (or upload prescription below)"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -306,77 +427,79 @@ export default function CreateOrder() {
           {/* Right Column */}
           <div className="space-y-3">
             {/* Documents */}
-            <Card>
-              <CardHeader className="pb-2 pt-4 px-5">
-                <CardTitle className="text-base">Upload Documents</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4 px-5 space-y-3">
-                <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <div className="space-y-1">
-                    <Label htmlFor="file-upload" className="cursor-pointer">
-                      <span className="text-sm text-primary font-medium hover:underline">
-                        Choose files
-                      </span>
-                      {" "}
-                      <span className="text-xs">or drag and drop</span>
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      PNG, JPG, PDF up to 10MB
-                    </p>
+            {withPrescription && (
+              <Card>
+                <CardHeader className="pb-2 pt-4 px-5">
+                  <CardTitle className="text-base">Upload Prescription</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4 px-5 space-y-3">
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <div className="space-y-1">
+                      <Label htmlFor="file-upload" className="cursor-pointer">
+                        <span className="text-sm text-primary font-medium hover:underline">
+                          Choose files
+                        </span>
+                        {" "}
+                        <span className="text-xs">or drag and drop</span>
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG, PDF up to 10MB
+                      </p>
+                    </div>
+                    <Input
+                      id="file-upload"
+                      type="file"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept=".png,.jpg,.jpeg,.pdf"
+                    />
                   </div>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    multiple
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".png,.jpg,.jpeg,.pdf"
-                  />
-                </div>
 
-                {files.length > 0 && (
-                  <div className="space-y-2 max-h-24 overflow-y-auto">
-                    {files.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors group"
-                      >
-                        <div 
-                          className="h-9 w-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0 cursor-pointer overflow-hidden"
-                          onClick={() => handlePreviewFile(file)}
+                  {files.length > 0 && (
+                    <div className="space-y-2 max-h-24 overflow-y-auto">
+                      {files.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors group"
                         >
-                          {file.type.startsWith('image/') ? (
-                            <img 
-                              src={URL.createObjectURL(file)} 
-                              alt={file.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <FileText className="h-4 w-4 text-primary" />
-                          )}
+                          <div 
+                            className="h-9 w-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0 cursor-pointer overflow-hidden"
+                            onClick={() => handlePreviewFile(file)}
+                          >
+                            {file.type.startsWith('image/') ? (
+                              <img 
+                                src={URL.createObjectURL(file)} 
+                                alt={file.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <FileText className="h-4 w-4 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{file.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeFile(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Cart */}
             <Card className="flex-1">
@@ -408,6 +531,7 @@ export default function CreateOrder() {
                         <div key={item.product_id} className="flex items-center gap-3 p-2 border border-border rounded-lg">
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate">{product?.name}</p>
+                            <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
                             <p className="text-xs text-muted-foreground">AED {product?.price}</p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -416,17 +540,17 @@ export default function CreateOrder() {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.product_id, item.qty - 1)}
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
-                            <span className="text-sm w-8 text-center">{item.quantity}</span>
+                            <span className="text-sm w-8 text-center">{item.qty}</span>
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.product_id, item.qty + 1)}
                             >
                               <PlusIcon className="h-3 w-3" />
                             </Button>
@@ -452,11 +576,11 @@ export default function CreateOrder() {
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={handleCancel} className="h-9" disabled={submitting}>
+          <Button type="button" variant="outline" onClick={handleCancel} className="h-9" disabled={createOrderLoading}>
             Cancel
           </Button>
-          <Button type="submit" className="h-9" disabled={submitting}>
-            {submitting ? "Creating..." : "Submit Order"}
+          <Button type="submit" className="h-9" disabled={createOrderLoading}>
+            {createOrderLoading ? "Creating..." : "Submit Order"}
           </Button>
         </div>
       </form>
@@ -527,6 +651,7 @@ export default function CreateOrder() {
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">{product.name}</h4>
+                        <p className="text-xs text-muted-foreground truncate">SKU: {product.sku}</p>
                         <p className="text-xs text-muted-foreground truncate">{product.description}</p>
                         <p className="text-sm font-semibold text-primary">AED {product.price}</p>
                       </div>

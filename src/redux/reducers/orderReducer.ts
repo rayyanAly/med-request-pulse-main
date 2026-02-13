@@ -6,6 +6,10 @@ import {
   FETCH_SINGLE_ORDER_REQUEST,
   FETCH_SINGLE_ORDER_SUCCESS,
   FETCH_SINGLE_ORDER_FAILURE,
+  CREATE_ORDER_REQUEST,
+  CREATE_ORDER_SUCCESS,
+  CREATE_ORDER_FAILURE,
+  CREATE_ORDER_RESET,
 } from '../constants/orderConstants';
 
 interface OrderState {
@@ -13,6 +17,10 @@ interface OrderState {
   orders: Order[];
   singleOrder: Order | null;
   error: string;
+  createOrderLoading: boolean;
+  createOrderSuccess: boolean;
+  createOrderError: string | null;
+  createdOrder: any | null;
 }
 
 const initialState: OrderState = {
@@ -20,6 +28,10 @@ const initialState: OrderState = {
   orders: [],
   singleOrder: null,
   error: '',
+  createOrderLoading: false,
+  createOrderSuccess: false,
+  createOrderError: null,
+  createdOrder: null,
 };
 
 const orderReducer = (state = initialState, action: any): OrderState => {
@@ -63,6 +75,36 @@ const orderReducer = (state = initialState, action: any): OrderState => {
         loading: false,
         singleOrder: null,
         error: action.payload,
+      };
+    case CREATE_ORDER_REQUEST:
+      return {
+        ...state,
+        createOrderLoading: true,
+        createOrderSuccess: false,
+        createOrderError: null,
+      };
+    case CREATE_ORDER_SUCCESS:
+      return {
+        ...state,
+        createOrderLoading: false,
+        createOrderSuccess: true,
+        createdOrder: action.payload,
+        createOrderError: null,
+      };
+    case CREATE_ORDER_FAILURE:
+      return {
+        ...state,
+        createOrderLoading: false,
+        createOrderSuccess: false,
+        createOrderError: action.payload,
+      };
+    case CREATE_ORDER_RESET:
+      return {
+        ...state,
+        createOrderLoading: false,
+        createOrderSuccess: false,
+        createOrderError: null,
+        createdOrder: null,
       };
     default:
       return state;

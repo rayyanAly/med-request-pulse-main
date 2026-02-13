@@ -1,5 +1,3 @@
-// vite.config.ts(dev)
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -7,16 +5,22 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: mode === "development" ? "/" : "/panel_v2/",
   server: {
     host: "::",
     port: 8080,
-    proxy: {
-      '/api': {
-        target: 'https://dashboard.800pharmacy.ae',
+    // Proxy only in dev mode
+    proxy: mode === "development" ? {
+      '/api/api_panel/v2': {
+        target: 'https://800pharmacy.ae',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api\/api_panel\/v2/, '/api_panel/v2'),
+        headers: {
+          'Origin': 'https://800pharmacy.ae',
+          'X-Forwarded-Host': '800pharmacy.ae',
+        },
       },
-    },
+    } : undefined,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
@@ -25,36 +29,3 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
-
-
-
-// // vite.config.ts(prod)
-
-// import { defineConfig } from 'vite';
-// import react from '@vitejs/plugin-react-swc';
-// import path from 'path';
-
-// export default defineConfig({
-//   plugins: [react()],
-//   base: '/panel_v2/',                  
-
-//   build: {
-//     outDir: 'dist',
-//     emptyOutDir: true,
-//   },
-//   server: {
-//     proxy: {
-//       '/api': {
-//         target: 'https://dashboard.800pharmacy.ae',
-//         changeOrigin: true,
-//         secure: true,
-//       },
-//     },
-//   },
-//   resolve: {
-//     alias: {
-//       '@': path.resolve(__dirname, 'src'),
-//     },
-//   },
-// });
-

@@ -1,4 +1,8 @@
-const BASE_URL = import.meta.env.DEV ? '/api/api_panel/1.0' : 'https://dashboard.800pharmacy.ae/api_panel/2.0';
+// Use API_BASE_URL from env - defaults to live API
+// Dev: Uses proxy → /api/api_panel/2.0
+// Prod: Uses VITE_API_BASE_URL directly
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://800pharmacy.ae/api_panel/v2';
+const BASE_URL = import.meta.env.DEV ? '/api/api_panel/v2' : API_BASE_URL;
 const PARTNER_ID = import.meta.env.VITE_PARTNER_ID;
 const REF_ID = import.meta.env.VITE_REF_ID;
 

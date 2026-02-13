@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux';
-import { fetchOrders, fetchSingleOrder } from '../../api/orderApi';
-import { Order } from '../../api/types';
+import { fetchOrders, fetchSingleOrder, createOrderDirect } from '../../api/orderApi';
+import { Order, CreateOrderRequest } from '../../api/types';
 import {
   FETCH_ORDERS_REQUEST,
   FETCH_ORDERS_SUCCESS,
@@ -8,6 +8,10 @@ import {
   FETCH_SINGLE_ORDER_REQUEST,
   FETCH_SINGLE_ORDER_SUCCESS,
   FETCH_SINGLE_ORDER_FAILURE,
+  CREATE_ORDER_REQUEST,
+  CREATE_ORDER_SUCCESS,
+  CREATE_ORDER_FAILURE,
+  CREATE_ORDER_RESET,
 } from '../constants/orderConstants';
 
 export const fetchOrdersRequest = () => ({
@@ -36,6 +40,24 @@ export const fetchSingleOrderSuccess = (order: Order) => ({
 export const fetchSingleOrderFailure = (error: string) => ({
   type: FETCH_SINGLE_ORDER_FAILURE,
   payload: error,
+});
+
+export const createOrderRequest = () => ({
+  type: CREATE_ORDER_REQUEST,
+});
+
+export const createOrderSuccess = (order: any) => ({
+  type: CREATE_ORDER_SUCCESS,
+  payload: order,
+});
+
+export const createOrderFailure = (error: string) => ({
+  type: CREATE_ORDER_FAILURE,
+  payload: error,
+});
+
+export const createOrderReset = () => ({
+  type: CREATE_ORDER_RESET,
 });
 
 export const fetchAllOrders = () => {
@@ -69,6 +91,25 @@ export const fetchOrderById = (orderId: string) => {
       }
     } catch (error: any) {
       dispatch(fetchSingleOrderFailure(error.message || 'Network error'));
+    }
+  };
+};
+
+export const createNewOrder = (orderData: CreateOrderRequest, files: File[] = []) => {
+  return async (dispatch: Dispatch) => {
+    dispatch(createOrderRequest());
+    try {
+      const result = await createOrderDirect(orderData, files);
+      if (result.success) {
+        dispatch(createOrderSuccess(result.data));
+        return { success: true, data: result.data };
+      } else {
+        dispatch(createOrderFailure(result.message || 'Failed to create order'));
+        return { success: false, message: result.message };
+      }
+    } catch (error: any) {
+      dispatch(createOrderFailure(error.message || 'Network error'));
+      return { success: false, message: error.message };
     }
   };
 };
