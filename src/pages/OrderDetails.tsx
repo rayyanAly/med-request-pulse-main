@@ -17,12 +17,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
-import { fetchOrderById } from "@/redux/actions/orderActions";
+import { fetchOrderById, cancelOrderById } from "@/redux/actions/orderActions";
 
 interface Attachment {
   attachment_url: string;
@@ -33,14 +43,24 @@ export default function OrderDetails() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { singleOrder, loading, error } = useSelector((state: any) => state.orders);
+  const { singleOrder, loading, error, cancelOrderLoading, cancelOrderSuccess } = useSelector((state: any) => state.orders);
   const [previewDocument, setPreviewDocument] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
     if (orderId) {
       dispatch(fetchOrderById(orderId));
     }
   }, [dispatch, orderId]);
+
+  // Refresh order after successful cancellation
+  useEffect(() => {
+    if (cancelOrderSuccess && orderId) {
+      toast.success("Order cancelled successfully");
+      setShowCancelDialog(false);
+      dispatch(fetchOrderById(orderId));
+    }
+  }, [cancelOrderSuccess, dispatch, orderId]);
 
   if (loading) {
     return (
@@ -68,13 +88,29 @@ export default function OrderDetails() {
 
   const order = singleOrder;
 
+  // Format date to dd-mm-yyyy hh:mm:ss AM/PM
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${day}-${month}-${year}, ${hours}:${minutes}:${seconds} ${ampm}`;
+  };
+
   // Define all possible order stages with dynamic timestamps
   const orderStages = [
-    { status: "New Order", label: "Order Received", time: order.activities?.received_at ? new Date(order.activities.received_at).toLocaleString() : '' },
-    { status: "Under Process", label: "Processing", time: order.activities?.accepted_at ? new Date(order.activities.accepted_at).toLocaleString() : '' },
-    { status: "Ready for Delivery", label: "Ready for Delivery", time: order.activities?.prepared_at ? new Date(order.activities.prepared_at).toLocaleString() : '' },
-    { status: "Out for Delivery", label: "Out for Delivery", time: order.activities?.dispatched ? new Date(order.activities.dispatched).toLocaleString() : '' },
-    { status: "Delivered", label: "Delivered", time: order.activities?.delivered_at ? new Date(order.activities.delivered_at).toLocaleString() : '' },
+    { status: "New Order", label: "Order Received", time: order.activities?.received_at ? formatDateTime(order.activities.received_at) : '' },
+    { status: "Under Process", label: "Processing", time: order.activities?.accepted_at ? formatDateTime(order.activities.accepted_at) : '' },
+    { status: "Ready for Delivery", label: "Ready for Delivery", time: order.activities?.prepared_at ? formatDateTime(order.activities.prepared_at) : '' },
+    { status: "Out for Delivery", label: "Out for Delivery", time: order.activities?.dispatched ? formatDateTime(order.activities.dispatched) : '' },
+    { status: "Delivered", label: "Delivered", time: order.activities?.delivered_at ? formatDateTime(order.activities.delivered_at) : '' },
   ];
 
   // Map status names to match between order statuses
@@ -143,6 +179,29 @@ export default function OrderDetails() {
     return totalItem?.value || 0;
   };
 
+  // Check if order can be cancelled (order_status_id < 3)
+  const canCancelOrder = () => {
+    const statusId = parseInt(order.order_status_id || '0', 10);
+    return statusId < 3 && order.cancel_key && order.order_status !== 'Cancelled';
+  };
+
+  // Clean comment by removing <br /> tags (backend adds ERX with br tag)
+  const cleanComment = (comment: string | undefined) => {
+    if (!comment) return '-';
+    // Remove <br /> tags and replace with space, then clean up multiple spaces
+    return comment.replace(/<br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
+  };
+
+  // Handle cancel order
+  const handleCancelOrder = () => {
+    if (!order.cancel_key || !orderId) {
+      toast.error("Cannot cancel order: missing cancel key");
+      return;
+    }
+    
+    dispatch(cancelOrderById(orderId, order.cancel_key));
+  };
+
   return (
     <div className="space-y-3 h-full">
       {/* Header */}
@@ -161,7 +220,7 @@ export default function OrderDetails() {
               Order No: {`#${order.order_id_internal}`}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Received: {new Date(order.date_added).toLocaleString()}
+              Received: {formatDateTime(order.date_added)}
             </p>
           </div>
         </div>
@@ -169,7 +228,15 @@ export default function OrderDetails() {
           <Badge className={getBadgeStyle(order.order_status)} variant="secondary">
             {order.order_status}
           </Badge>
-          <Button variant="destructive" size="sm" className="h-9">Cancel</Button>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            className="h-9"
+            disabled={!canCancelOrder() || cancelOrderLoading}
+            onClick={() => setShowCancelDialog(true)}
+          >
+            {cancelOrderLoading ? 'Cancelling...' : 'Cancel'}
+          </Button>
         </div>
       </div>
 
@@ -231,9 +298,9 @@ export default function OrderDetails() {
                        <p className="text-sm font-medium">{order.erx || "-"}</p>
                      </div>
                      <div>
-                       <p className="text-xs text-muted-foreground">Comments</p>
-                       <p className="text-sm font-medium">{order.comment}</p>
-                     </div>
+                        <p className="text-xs text-muted-foreground">Comments</p>
+                        <p className="text-sm font-medium">{cleanComment(order.comment)}</p>
+                      </div>
                   </div>
                 </div>
               </div>
@@ -480,6 +547,28 @@ export default function OrderDetails() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Cancel Order Confirmation Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel order #{order.order_id_internal}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelOrderLoading}>No, Keep Order</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelOrder}
+              disabled={cancelOrderLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelOrderLoading ? 'Cancelling...' : 'Yes, Cancel Order'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

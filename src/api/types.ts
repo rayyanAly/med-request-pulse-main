@@ -299,7 +299,7 @@ export interface OrderListItem {
 
 // ==================== Response Types ====================
 
-export type PaymentMethod = 'cash' | 'card' | 'online' | 'pal' | 'paid_already';
+export type PaymentMethod = 'cash' | 'card' | 'online' | 'paid_already';
 
 // ==================== Component Props Types ====================
 

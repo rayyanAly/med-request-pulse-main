@@ -117,7 +117,8 @@ export default function CreateOrder() {
 
   const filteredProducts = availableProducts.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toString().includes(searchTerm.toLowerCase())
+    product.sku.toString().includes(searchTerm.toLowerCase()) ||
+    (product.plus_symptoms && product.plus_symptoms.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const addToCart = () => {
@@ -468,16 +469,15 @@ export default function CreateOrder() {
                     value={paymentMethod} 
                     onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
                   >
-                    <SelectTrigger className="h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm w-full max-w-[200px]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash on Delivery</SelectItem>
-                      <SelectItem value="card">Card on Delivery</SelectItem>
-                      <SelectItem value="online">Online Payment</SelectItem>
-                      <SelectItem value="pal">PAL Pay</SelectItem>
-                      <SelectItem value="paid_already">Paid Already</SelectItem>
-                    </SelectContent>
+                    <SelectContent className="min-w-[150px]">
+                       <SelectItem value="cash">Cash on Delivery</SelectItem>
+                       <SelectItem value="card">Card on Delivery</SelectItem>
+                       <SelectItem value="online">Online Payment</SelectItem>
+                       <SelectItem value="paid_already">Paid Already</SelectItem>
+                      </SelectContent>
                   </Select>
                 </div>
 
@@ -766,10 +766,11 @@ export default function CreateOrder() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2 h-9 text-sm mb-3"
+                  size="sm"
+                  className="gap-1.5 h-8 text-xs mb-3"
                   onClick={() => setShowProductDialog(true)}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   Add Product
                 </Button>
                 {cart.length === 0 ? (
@@ -782,19 +783,19 @@ export default function CreateOrder() {
                       const product = reduxProducts.find((p: Product) => p.product_id === item.product_id);
                       return (
                         <div key={item.product_id} className="flex items-center gap-3 p-2 border border-border rounded-lg">
-                          <img
-                            src={getProductImageUrl(product?.image)}
-                            alt={product?.name}
-                            className="w-10 h-10 object-contain rounded bg-muted"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                            }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{product?.name}</p>
-                            <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
-                            <p className="text-xs text-muted-foreground">AED {product?.price}</p>
-                          </div>
+                           <img
+                             src={getProductImageUrl(product?.image)}
+                             alt={product?.name}
+                            className="w-10 h-10 object-contain rounded bg-muted shrink-0"
+                             onError={(e) => {
+                               e.currentTarget.src = '/placeholder.svg';
+                             }}
+                           />
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <p className="font-medium text-sm truncate" title={product?.name}>{product?.name}</p>
+                             <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
+                             <p className="text-xs text-muted-foreground">AED {product?.price}</p>
+                           </div>
                           <div className="flex items-center gap-2">
                             <Button
                               type="button"
@@ -890,61 +891,83 @@ export default function CreateOrder() {
 
       {/* Product Selection Dialog */}
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
-        <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Select Product</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden flex flex-col px-1 pt-1">
-            <Input
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 text-sm mb-4"
-            />
-            <div className="flex-1 overflow-auto space-y-2 px-1 pt-2">
-              {productsLoading ? (
-                <div className="space-y-2">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="p-3 border border-border rounded-lg">
-                      <Skeleton className="h-12 w-full" />
-                    </div>
-                  ))}
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm ? "No products found matching your search" : "No products available"}
-                </div>
-              ) : (
-                filteredProducts.map((product) => {
+        <DialogContent className="max-w-2xl p-0 gap-0">
+          {/* Header */}
+          <div className="px-6 py-4 border-b">
+            <DialogTitle className="text-lg font-semibold">Select Product</DialogTitle>
+          </div>
+          
+          {/* Search */}
+          <div className="px-6 py-3 border-b">
+            <div className="relative">
+              <Input
+                placeholder="Search by name, SKU, or symptoms..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 pr-10"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSearchTerm("")}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Product List */}
+          <div className="max-h-[400px] overflow-y-auto">
+            {productsLoading ? (
+              <div className="p-4 space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="p-3 border rounded-lg">
+                    <Skeleton className="h-14 w-full" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                {searchTerm ? "No products found matching your search" : "No products available"}
+              </div>
+            ) : (
+              <div className="p-4 space-y-2">
+                {filteredProducts.map((product) => {
                   const inStock = (product.available_stock || 0) > 0;
+                  const isSelected = selectedProduct?.product_id === product.product_id;
                   return (
                     <div
                       key={product.product_id}
-                      className={`p-3 border border-border rounded-lg cursor-pointer transition-colors mx-1 ${
-                        selectedProduct?.product_id === product.product_id ? 'ring-2 ring-primary' : ''
-                      } ${!inStock ? 'opacity-50' : 'hover:bg-muted'}`}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                          : inStock 
+                            ? 'hover:bg-muted/50 border-border' 
+                            : 'opacity-50 cursor-not-allowed border-border'
+                      }`}
                       onClick={() => inStock && setSelectedProduct(product)}
                     >
                       <div className="flex gap-3">
                         <img
                           src={getProductImageUrl(product.image)}
                           alt={product.name}
-                          className="w-14 h-14 object-contain rounded bg-muted"
+                          className="w-14 h-14 object-contain rounded bg-muted shrink-0"
                           onError={(e) => {
                             e.currentTarget.src = '/placeholder.svg';
                           }}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <h4 className="font-medium text-sm truncate">{product.name}</h4>
                               <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
-                              <p className="text-xs text-muted-foreground">{product.unit}</p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                               <p className="font-bold text-primary">AED {product.price.toFixed(2)}</p>
                               <p className={`text-xs ${inStock ? 'text-green-600' : 'text-red-500'}`}>
-                                {inStock ? `In Stock: ${product.available_stock}` : 'Out of Stock'}
+                                {inStock ? `Stock: ${product.available_stock}` : 'Out of Stock'}
                               </p>
                             </div>
                           </div>
@@ -955,49 +978,67 @@ export default function CreateOrder() {
                       </div>
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
-          {selectedProduct && (
-            <div className="border-t pt-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Quantity:</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="w-12 text-center">{quantity}</span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setQuantity(quantity + 1)}
-                  >
-                    <PlusIcon className="h-3 w-3" />
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    (Max: {selectedProduct.available_stock || 0})
-                  </span>
+          
+          {/* Footer - Quantity and Actions */}
+          <div className="px-6 py-4 border-t bg-muted/30">
+            {selectedProduct ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Quantity:</span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-10 text-center font-medium">{quantity}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setQuantity(quantity + 1)}
+                      >
+                        <PlusIcon className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Max: {selectedProduct.available_stock || 0}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setSelectedProduct(null);
+                        setQuantity(1);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={addToCart}>
+                      Add to Cart
+                    </Button>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
+            ) : (
+              <div className="flex justify-end">
                 <Button variant="outline" onClick={() => setShowProductDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={addToCart}>
-                  Add to Cart
+                  Close
                 </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

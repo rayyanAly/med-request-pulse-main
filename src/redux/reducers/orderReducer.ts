@@ -10,6 +10,9 @@ import {
   CREATE_ORDER_SUCCESS,
   CREATE_ORDER_FAILURE,
   CREATE_ORDER_RESET,
+  CANCEL_ORDER_REQUEST,
+  CANCEL_ORDER_SUCCESS,
+  CANCEL_ORDER_FAILURE,
 } from '../constants/orderConstants';
 
 interface OrderState {
@@ -21,6 +24,9 @@ interface OrderState {
   createOrderSuccess: boolean;
   createOrderError: string | null;
   createdOrder: any | null;
+  cancelOrderLoading: boolean;
+  cancelOrderSuccess: boolean;
+  cancelOrderError: string | null;
 }
 
 const initialState: OrderState = {
@@ -32,6 +38,9 @@ const initialState: OrderState = {
   createOrderSuccess: false,
   createOrderError: null,
   createdOrder: null,
+  cancelOrderLoading: false,
+  cancelOrderSuccess: false,
+  cancelOrderError: null,
 };
 
 const orderReducer = (state = initialState, action: any): OrderState => {
@@ -105,6 +114,31 @@ const orderReducer = (state = initialState, action: any): OrderState => {
         createOrderSuccess: false,
         createOrderError: null,
         createdOrder: null,
+      };
+    case CANCEL_ORDER_REQUEST:
+      return {
+        ...state,
+        cancelOrderLoading: true,
+        cancelOrderSuccess: false,
+        cancelOrderError: null,
+      };
+    case CANCEL_ORDER_SUCCESS:
+      return {
+        ...state,
+        cancelOrderLoading: false,
+        cancelOrderSuccess: true,
+        cancelOrderError: null,
+        // Update the singleOrder status if it exists
+        singleOrder: state.singleOrder
+          ? { ...state.singleOrder, order_status: 'Cancelled', cancel_reason: 'Cancelled by partner' }
+          : null,
+      };
+    case CANCEL_ORDER_FAILURE:
+      return {
+        ...state,
+        cancelOrderLoading: false,
+        cancelOrderSuccess: false,
+        cancelOrderError: action.payload,
       };
     default:
       return state;

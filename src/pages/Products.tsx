@@ -49,7 +49,8 @@ export default function Products() {
 
   const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toString().includes(searchTerm.toLowerCase())
+    product.sku.toString().includes(searchTerm.toLowerCase()) ||
+    (product.plus_symptoms && product.plus_symptoms.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const categoryFilteredProducts = selectedCategory === "all" 
@@ -81,7 +82,7 @@ export default function Products() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or SKU..."
+                placeholder="Search by name, SKU, or symptoms..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -173,22 +174,25 @@ export default function Products() {
                   />
                   {product.prescription_required === 1 && (
                     <Badge className="absolute top-2 right-2" variant="secondary">
-                      Rx Required
+                      Rx
                     </Badge>
                   )}
                 </div>
-                <CardContent className="p-4 space-y-2">
-                  <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">
+                <CardContent className="p-3 space-y-1.5">
+                  <h3 className="font-medium text-sm line-clamp-2 leading-tight">
                     {product.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>SKU: {product.sku}</span>
+                    {product.unit && <span>• {product.unit}</span>}
+                  </div>
                   {product.category_name && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] h-5">
                       {product.category_name}
                     </Badge>
                   )}
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="font-bold text-primary">AED {product.price.toFixed(2)}</span>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-bold text-primary text-sm">AED {product.price.toFixed(2)}</span>
                     <span className="text-xs text-muted-foreground">
                       {product.available_stock || 0} in stock
                     </span>
@@ -208,32 +212,37 @@ export default function Products() {
                     <img
                       src={getProductImageUrl(product.image)}
                       alt={product.name}
-                      className="w-16 h-16 object-contain rounded-lg bg-muted"
+                      className="w-16 h-16 object-contain rounded-lg bg-muted shrink-0"
                       onError={(e) => {
                         e.currentTarget.src = "/placeholder.svg";
                       }}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
-                          {product.category_name && (
-                            <Badge variant="outline" className="text-xs mt-1">
-                              {product.category_name}
-                            </Badge>
-                          )}
+                        <div className="min-w-0">
+                          <h3 className="font-medium truncate">{product.name}</h3>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>SKU: {product.sku}</span>
+                            {product.unit && <span>• {product.unit}</span>}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {product.category_name && (
+                              <Badge variant="outline" className="text-xs">
+                                {product.category_name}
+                              </Badge>
+                            )}
+                            {product.prescription_required === 1 && (
+                              <Badge variant="secondary" className="text-xs">
+                                Rx Required
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <p className="font-bold text-primary">AED {product.price.toFixed(2)}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {product.available_stock || 0} in stock
                           </p>
-                          {product.prescription_required === 1 && (
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              Prescription Required
-                            </Badge>
-                          )}
                         </div>
                       </div>
                     </div>

@@ -1,6 +1,6 @@
 import { Dispatch } from "redux";
-import { fetchOrders, fetchSingleOrder, createOrder, fetchDashboardStats } from "@/api/orderApi";
-import { Order, CreateOrderRequest, OrderFiles } from "@/api/types";
+import { fetchOrders, fetchSingleOrder, createOrder, fetchDashboardStats, cancelOrder } from "@/api/orderApi";
+import { Order, CreateOrderRequest, OrderFiles, CancelOrderRequest } from "@/api/types";
 import {
   FETCH_ORDERS_REQUEST,
   FETCH_ORDERS_SUCCESS,
@@ -12,6 +12,9 @@ import {
   CREATE_ORDER_SUCCESS,
   CREATE_ORDER_FAILURE,
   CREATE_ORDER_RESET,
+  CANCEL_ORDER_REQUEST,
+  CANCEL_ORDER_SUCCESS,
+  CANCEL_ORDER_FAILURE,
 } from "../constants/orderConstants";
 
 export const fetchOrdersRequest = () => ({
@@ -134,6 +137,40 @@ export const loadDashboardStats = () => {
       }
       return { success: false, message: result.message };
     } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  };
+};
+
+// Cancel Order Actions
+export const cancelOrderRequest = () => ({
+  type: CANCEL_ORDER_REQUEST,
+});
+
+export const cancelOrderSuccess = (data: { order_id: string; status: string }) => ({
+  type: CANCEL_ORDER_SUCCESS,
+  payload: data,
+});
+
+export const cancelOrderFailure = (error: string) => ({
+  type: CANCEL_ORDER_FAILURE,
+  payload: error,
+});
+
+export const cancelOrderById = (orderId: string, cancelKey: string) => {
+  return async (dispatch: Dispatch) => {
+    dispatch(cancelOrderRequest());
+    try {
+      const result = await cancelOrder({ id: orderId, cancel_key: cancelKey });
+      if (result.success && result.data) {
+        dispatch(cancelOrderSuccess(result.data));
+        return { success: true, data: result.data };
+      } else {
+        dispatch(cancelOrderFailure(result.message || "Failed to cancel order"));
+        return { success: false, message: result.message };
+      }
+    } catch (error: any) {
+      dispatch(cancelOrderFailure(error.message || "Network error"));
       return { success: false, message: error.message };
     }
   };
