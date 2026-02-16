@@ -1,6 +1,6 @@
 import { Dispatch } from "redux";
 import { fetchOrders, fetchSingleOrder, createOrder, fetchDashboardStats } from "@/api/orderApi";
-import { Order, CreateOrderRequest } from "@/api/types";
+import { Order, CreateOrderRequest, OrderFiles } from "@/api/types";
 import {
   FETCH_ORDERS_REQUEST,
   FETCH_ORDERS_SUCCESS,
@@ -105,7 +105,7 @@ export const fetchOrderById = (orderId: string) => {
 
 export const createNewOrder = (
   orderData: CreateOrderRequest,
-  files: File[] = []
+  files: OrderFiles = {}
 ) => {
   return async (dispatch: Dispatch) => {
     dispatch(createOrderRequest());

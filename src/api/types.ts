@@ -71,6 +71,12 @@ export interface OrderTotal {
   sort_order: number;
 }
 
+// API format for order creation (uses sku and qty)
+export interface OrderProductApi {
+  sku: string;
+  qty: number;
+}
+
 export interface Order {
   order_id: string;
   order_id_internal?: string;
@@ -97,10 +103,11 @@ export interface Order {
   prescription?: number;
   order_status?: string;
   internal_name?: string | null;
-  total?: OrderTotal[];
+  // total can be a number (in orders list) or OrderTotal[] (in single order details)
+  total?: number | OrderTotal[];
   address?: string | null;
   activities?: OrderActivity;
-  attachments?: Array<{ attachment_url: string; attachment_type: string }>;
+  attachments?: OrderAttachment[];
   products?: OrderProduct[];
   erx?: string;
   order_status_id?: string;
@@ -109,6 +116,11 @@ export interface Order {
   agent_name?: string | null;
   item_total?: number;
   a_notes?: string;
+}
+
+export interface OrderAttachment {
+  attachment_url: string;
+  attachment_type: string;
 }
 
 export interface OrderStatus {
@@ -133,11 +145,9 @@ export interface CreateOrderRequest {
   first_name: string;
   last_name: string;
   contact_number: string;
-  building: string;
-  unit: string;
   
-  // Products array (uses CartItem format)
-  products: CartItem[];
+  // Products array (API format: sku and qty)
+  products: OrderProductApi[];
   
   // Payment method: cash, card, online, pal, paid_already
   payment_method: string;
@@ -148,9 +158,16 @@ export interface CreateOrderRequest {
   
   // Optional fields
   customer_id?: string;
-  eid_no?: string;
+  eid_no?: string;  // Sent as 'eid' to API
   erx?: string;
-  notes?: string;
+  notes?: string;   // Sent as 'comments' to API
+  deliver_date?: string;
+  delivery_time?: string;
+  policy_number?: string;
+  
+  // Session ID for pre-uploaded prescriptions (via upload_temp)
+  // Use 'session' field name - same ID used when uploading via upload_temp
+  session?: string;
 }
 
 export interface CreateOrderResponse {
@@ -257,6 +274,14 @@ export interface CartItem {
   qty: number;
 }
 
+// ==================== Order Files Types ====================
+
+export interface OrderFiles {
+  prescription?: File | null;
+  insurance?: File | null;
+  emirates_id?: File | null;
+}
+
 // ==================== UI Types ====================
 
 export interface OrderListItem {
@@ -280,6 +305,7 @@ export type PaymentMethod = 'cash' | 'card' | 'online' | 'pal' | 'paid_already';
 
 export interface OrdersTableProps {
   statusFilter: string;
+  filteredOrders?: any[];
 }
 
 export interface StatCardProps {

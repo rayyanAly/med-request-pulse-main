@@ -13,11 +13,16 @@
 		},
 		{
 			"key": "partnerId",
-			"value": "",
+			"value": "310ab792-bcba-11ed-815d-020017006c44",
 			"type": "string"
 		},
 		{
-			"key": "securityCode",
+			"key": "refId",
+			"value": "430",
+			"type": "string"
+		},
+		{
+			"key": "sessionToken",
 			"value": "",
 			"type": "string"
 		}
@@ -27,9 +32,9 @@
 			"name": "Authentication",
 			"item": [
 				{
-					"name": "Generate Session",
+					"name": "Partner Login",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [
 							{
 								"key": "X-Partner-Id",
@@ -37,24 +42,82 @@
 								"type": "text"
 							},
 							{
-								"key": "X-Security-Code",
-								"value": "{{securityCode}}",
+								"key": "X-Ref-Id",
+								"value": "{{refId}}",
 								"type": "text"
 							}
 						],
-						"url": {
-							"raw": "{{baseUrl}}/session",
-							"host": ["{{baseUrl}}"],
-							"path": ["session"]
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "user_name", "value": "your_username", "type": "text", "description": "Partner username"},
+								{"key": "password", "value": "your_password", "type": "text", "description": "Partner password"}
+							]
 						},
-						"description": "Generate a session token for API access"
+						"url": {
+							"raw": "{{baseUrl}}/?c=partners&m=login",
+							"host": ["{{baseUrl}}"],
+							"query": [
+								{"key": "c", "value": "partners", "description": "Controller"},
+								{"key": "m", "value": "login", "description": "Method"}
+							]
+						},
+						"description": "Partner login to get session token.\n\n**Headers:**\n- `X-Partner-Id`: Your partner ID\n- `X-Ref-Id`: Your partner reference ID\n\n**Returns:**\n- `partner_session`: Session token for subsequent requests\n- `partner_id`: Your partner ID\n- `partner_ref_id`: Your partner reference ID"
 					},
 					"response": [
 						{
 							"name": "Success",
 							"body": {
 								"mode": "raw",
-								"raw": "{\n    \"data\": {\n        \"session\": \"session_token_here\"\n    }\n}"
+								"raw": "{\n    \"success\": true,\n    \"data\": {\n        \"partner_session\": \"abc123xyz_session_token\",\n        \"partner_id\": \"310ab792-bcba-11ed-815d-020017006c44\",\n        \"partner_ref_id\": \"430\"\n    }\n}"
+							}
+						},
+						{
+							"name": "Error - Invalid Credentials",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"success\": false,\n    \"error\": \"Invalid username or password\"\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Partner-Id",
+								"value": "{{partnerId}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Ref-Id",
+								"value": "{{refId}}",
+								"type": "text"
+							},
+							{
+								"key": "X-Session",
+								"value": "{{sessionToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/?c=customers&m=logout",
+							"host": ["{{baseUrl}}"],
+							"query": [
+								{"key": "c", "value": "customers", "description": "Controller"},
+								{"key": "m", "value": "logout", "description": "Method"}
+							]
+						},
+						"description": "Logout and invalidate session."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"success\": true,\n    \"message\": \"Logged out successfully\"\n}"
 							}
 						}
 					]
@@ -70,7 +133,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/orders?limit=10&page=1",
@@ -102,7 +166,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/orders?id=ORDER_ID",
@@ -123,12 +188,94 @@
 					]
 				},
 				{
+					"name": "Upload Temp Prescription",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "prescription", "type": "file", "description": "Prescription image file (jpg, png, pdf)"},
+								{"key": "session", "value": "1739527200000", "type": "text", "description": "Unique session ID (timestamp) to group multiple files"}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/?c=orders&m=upload_temp",
+							"host": ["{{baseUrl}}"],
+							"query": [
+								{"key": "c", "value": "orders", "description": "Controller"},
+								{"key": "m", "value": "upload_temp", "description": "Method"}
+							]
+						},
+						"description": "Upload prescription image temporarily before creating order. Call this for each file, then pass the session ID when creating the order.\n\n**Session ID**: Use a timestamp like `Date.now()` - e.g., `1739527200000`. Use the same session ID for all files in one order.\n\n**Response contains `inserted_id`** - save this for deleting files if needed."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"success\": true,\n    \"message\": \"File uploaded successfully\",\n    \"data\": {\n        \"inserted_id\": \"123\",\n        \"session\": \"1739527200000\",\n        \"filename\": \"prescription_123.jpg\"\n    }\n}"
+							}
+						},
+						{
+							"name": "Error",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"success\": false,\n    \"error\": \"Invalid file type\"\n}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Delete Temp File",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/?c=orders&m=delete_temp&id=INSERTED_ID&session=SESSION_ID",
+							"host": ["{{baseUrl}}"],
+							"query": [
+								{"key": "c", "value": "orders", "description": "Controller"},
+								{"key": "m", "value": "delete_temp", "description": "Method"},
+								{"key": "id", "value": "INSERTED_ID", "description": "The inserted_id from upload_temp response"},
+								{"key": "session", "value": "SESSION_ID", "description": "The session ID used during upload"}
+							]
+						},
+						"description": "Delete a temporarily uploaded file.\n\n**Parameters:**\n- `id`: The `inserted_id` from the upload_temp response\n- `session`: The session ID used during upload"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"success\": true,\n    \"message\": \"File deleted successfully\"\n}"
+							}
+						},
+						{
+							"name": "Error",
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"success\": false,\n    \"error\": \"File not found\"\n}"
+							}
+						}
+					]
+				},
+				{
 					"name": "Create Order",
 					"request": {
 						"method": "POST",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"body": {
 							"mode": "formdata",
@@ -141,7 +288,13 @@
 								{"key": "payment_method", "value": "cash", "type": "text", "description": "cash, card, online, pal, paid_already"},
 								{"key": "with_insurance", "value": "0", "type": "text", "description": "0 or 1"},
 								{"key": "with_prescription", "value": "0", "type": "text", "description": "0 or 1"},
-								{"key": "products", "value": "[{\"sku\":\"12345\",\"qty\":1}]", "type": "text", "description": "JSON array with sku and qty fields"}
+								{"key": "products", "value": "[{\"sku\":\"12345\",\"qty\":1}]", "type": "text", "description": "JSON array with sku and qty fields (NOT product_id/quantity)"},
+								{"key": "session", "value": "1739527200000", "type": "text", "description": "Session ID from upload_temp (links pre-uploaded prescription files)", "disabled": true},
+								{"key": "erx", "value": "ERX123456", "type": "text", "description": "ERX number (if prescription exists in system)", "disabled": true},
+								{"key": "eid_no", "value": "784-1234-5678901-2", "type": "text", "description": "Emirates ID number", "disabled": true},
+								{"key": "notes", "value": "Delivery instructions", "type": "text", "description": "Order notes/comments", "disabled": true},
+								{"key": "insurance", "type": "file", "description": "Insurance card image (if with_insurance=1)", "disabled": true},
+								{"key": "emirates_id", "type": "file", "description": "Emirates ID image (for new customers)", "disabled": true}
 							]
 						},
 						"url": {
@@ -149,7 +302,7 @@
 							"host": ["{{baseUrl}}"],
 							"path": ["orders", "create"]
 						},
-						"description": "Create a new order"
+						"description": "Create a new order with products and optional file attachments.\n\n**Important Notes:**\n- Products MUST use `sku` and `qty` fields (NOT `product_id` and `quantity`)\n- For prescriptions: Pre-upload via `upload_temp` API and pass `session` ID\n- Files: `insurance` and `emirates_id` can be uploaded directly\n- Don't set Content-Type header - let browser set it for FormData"
 					},
 					"response": [
 						{
@@ -167,7 +320,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/orders/status?id=ORDER_ID",
@@ -193,7 +347,8 @@
 						"method": "POST",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"body": {
 							"mode": "formdata",
@@ -225,7 +380,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/orders/track?id=ORDER_ID",
@@ -256,7 +412,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/customers?limit=10&page=1",
@@ -285,7 +442,8 @@
 						"method": "POST",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"body": {
 							"mode": "formdata",
@@ -321,7 +479,8 @@
 						"method": "POST",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"body": {
 							"mode": "formdata",
@@ -358,7 +517,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/products?limit=10&page=1",
@@ -388,7 +548,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/products/showstock?sku=12345",
@@ -419,9 +580,10 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
-						"url": {
+                        "url": {
 							"raw": "{{baseUrl}}/stats",
 							"host": ["{{baseUrl}}"],
 							"path": ["stats"]
@@ -449,7 +611,8 @@
 						"method": "GET",
 						"header": [
 							{"key": "X-Partner-Id", "value": "{{partnerId}}", "type": "text"},
-							{"key": "X-Security-Code", "value": "{{securityCode}}", "type": "text"}
+							{"key": "X-Ref-Id", "value": "{{refId}}", "type": "text"},
+							{"key": "X-Session", "value": "{{sessionToken}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{baseUrl}}/categories",

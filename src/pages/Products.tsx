@@ -19,6 +19,20 @@ import { Product, Category } from "@/api/types";
 
 const ITEMS_PER_PAGE = 100;
 
+// Base URL for product images
+const IMAGE_BASE_URL = "https://dashboard.800pharmacy.ae/";
+
+// Helper to get full image URL
+const getProductImageUrl = (imagePath: string | undefined): string => {
+  if (!imagePath) return "/placeholder.svg";
+  // If already a full URL, return as is
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+  // Prepend the base URL
+  return `${IMAGE_BASE_URL}${imagePath}`;
+};
+
 export default function Products() {
   const dispatch = useDispatch<any>();
   const { products, categories, loading, error } = useSelector((state: RootState) => state.products);
@@ -150,7 +164,7 @@ export default function Products() {
               <Card key={product.product_id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <div className="aspect-square relative bg-muted">
                   <img
-                    src={product.image || "/placeholder.svg"}
+                    src={getProductImageUrl(product.image)}
                     alt={product.name}
                     className="w-full h-full object-contain p-4"
                     onError={(e) => {
@@ -192,7 +206,7 @@ export default function Products() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <img
-                      src={product.image || "/placeholder.svg"}
+                      src={getProductImageUrl(product.image)}
                       alt={product.name}
                       className="w-16 h-16 object-contain rounded-lg bg-muted"
                       onError={(e) => {

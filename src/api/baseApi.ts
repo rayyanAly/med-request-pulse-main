@@ -1,5 +1,5 @@
 // Use API_BASE_URL from env - defaults to live API
-// Dev: Uses proxy → /api/api_panel/2.0
+// Dev: Uses proxy -> /api/api_panel/2.0
 // Prod: Uses VITE_API_BASE_URL directly
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://800pharmacy.ae/api_panel/v2';
 const BASE_URL = import.meta.env.DEV ? '/api/api_panel/v2' : API_BASE_URL;
@@ -12,7 +12,7 @@ export const apiRequest = async (
 ): Promise<any> => {
   const url = `${BASE_URL}${endpoint}`;
 
-const defaultHeaders: Record<string, string> = {
+  const defaultHeaders: Record<string, string> = {
     'X-Partner-Id': localStorage.getItem('partner_id') || PARTNER_ID,
     'X-Ref-Id': localStorage.getItem('partner_ref_id') || REF_ID,
   };
@@ -23,27 +23,31 @@ const defaultHeaders: Record<string, string> = {
     defaultHeaders['X-Session'] = sessionToken;
   }
 
+  // IMPORTANT: Don't set Content-Type for FormData requests
+  // Let the browser set it automatically with the correct boundary
+  const isFormData = options.body instanceof FormData;
+
   const config: RequestInit = {
     ...options,
     headers: {
       ...defaultHeaders,
-      ...options.headers,
+      ...(isFormData ? {} : options.headers), // Skip custom headers for FormData
     },
   };
 
-const response = await fetch(url, config);
-const data = await response.json();
+  const response = await fetch(url, config);
+  const data = await response.json();
 
-if (!response.ok) {
-  if (response.status === 401) {
-    // Unauthorized - clear auth and logout
-    localStorage.removeItem('session_token');
-    localStorage.removeItem('user');
-    // Dispatch logout if store is available, but since this is API layer, redirect to login
-    window.location.href = '/auth';
+  if (!response.ok) {
+    if (response.status === 401) {
+      // Unauthorized - clear auth and logout
+      localStorage.removeItem('session_token');
+      localStorage.removeItem('user');
+      // Dispatch logout if store is available, but since this is API layer, redirect to login
+      window.location.href = '/auth';
+    }
+    throw new Error(data.message || 'API request failed');
   }
-  throw new Error(data.message || 'API request failed');
-}
 
-return data;
+  return data;
 };

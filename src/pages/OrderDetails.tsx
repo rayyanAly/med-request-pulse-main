@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Download } from "lucide-react";
+import { ArrowLeft, FileText, Download, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,12 +24,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { fetchOrderById } from "@/redux/actions/orderActions";
 
+interface Attachment {
+  attachment_url: string;
+  attachment_type: string;
+}
+
 export default function OrderDetails() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { singleOrder, loading, error } = useSelector((state: any) => state.orders);
-  const [previewDocument, setPreviewDocument] = useState<string | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<{ url: string; name: string; type: string } | null>(null);
 
   useEffect(() => {
     if (orderId) {
@@ -65,11 +70,11 @@ export default function OrderDetails() {
 
   // Define all possible order stages with dynamic timestamps
   const orderStages = [
-    { status: "New Order", label: "Order Received", time: order.received_at ? new Date(order.received_at).toLocaleString() : '' },
-    { status: "Under Process", label: "Processing", time: order.accepted_at ? new Date(order.accepted_at).toLocaleString() : '' },
-    { status: "Ready for Delivery", label: "Ready for Delivery", time: order.prepared_at ? new Date(order.prepared_at).toLocaleString() : '' },
-    { status: "Out for Delivery", label: "Out for Delivery", time: order.dispatched ? new Date(order.dispatched).toLocaleString() : '' },
-    { status: "Delivered", label: "Delivered", time: order.delivered_at ? new Date(order.delivered_at).toLocaleString() : '' },
+    { status: "New Order", label: "Order Received", time: order.activities?.received_at ? new Date(order.activities.received_at).toLocaleString() : '' },
+    { status: "Under Process", label: "Processing", time: order.activities?.accepted_at ? new Date(order.activities.accepted_at).toLocaleString() : '' },
+    { status: "Ready for Delivery", label: "Ready for Delivery", time: order.activities?.prepared_at ? new Date(order.activities.prepared_at).toLocaleString() : '' },
+    { status: "Out for Delivery", label: "Out for Delivery", time: order.activities?.dispatched ? new Date(order.activities.dispatched).toLocaleString() : '' },
+    { status: "Delivered", label: "Delivered", time: order.activities?.delivered_at ? new Date(order.activities.delivered_at).toLocaleString() : '' },
   ];
 
   // Map status names to match between order statuses
@@ -119,9 +124,23 @@ export default function OrderDetails() {
     }
   };
 
-  const handleDownload = (documentName: string) => {
-    // In a real app, this would download the actual file
-    toast.success(`Downloading ${documentName}...`);
+  const handleDownload = (attachment: Attachment) => {
+    // Open the attachment URL in a new tab for download
+    window.open(attachment.attachment_url, '_blank');
+    toast.success(`Downloading ${attachment.attachment_type}...`);
+  };
+
+  // Get attachments from order
+  const attachments: Attachment[] = order.attachments || [];
+  
+  // Separate prescriptions and other attachments
+  const prescriptions = attachments.filter(a => a.attachment_type === 'prescription');
+  const otherAttachments = attachments.filter(a => a.attachment_type !== 'prescription');
+
+  // Get total value from total array
+  const getTotalValue = (code: string) => {
+    const totalItem = order.total?.find((t: any) => t.code === code);
+    return totalItem?.value || 0;
   };
 
   return (
@@ -177,8 +196,12 @@ export default function OrderDetails() {
                       <p className="text-sm font-medium">{order.telephone}</p>
                     </div>
                     <div>
+                      <p className="text-xs text-muted-foreground">Delivery Date</p>
+                      <p className="text-sm font-medium">{order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : 'Not set'}</p>
+                    </div>
+                    <div>
                       <p className="text-xs text-muted-foreground">Delivery Time</p>
-                      <p className="text-sm font-medium">{order.delivery_time ? new Date(order.delivery_time).toLocaleString() : 'Not set'}</p>
+                      <p className="text-sm font-medium">{order.delivery_time || 'Not set'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Payment Method</p>
@@ -196,13 +219,21 @@ export default function OrderDetails() {
                       <p className="text-sm font-medium text-amber-600">{order.address || 'Delivery address not yet set!'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Agent Name</p>
-                      <p className="text-sm font-medium">{order.agent_name || "Not assigned"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Comments</p>
-                      <p className="text-sm font-medium">{order.comment}</p>
-                    </div>
+                       <p className="text-xs text-muted-foreground">Agent Name</p>
+                       <p className="text-sm font-medium">{order.agent_name || "Not assigned"}</p>
+                     </div>
+                     <div>
+                       <p className="text-xs text-muted-foreground">Agent Notes</p>
+                       <p className="text-sm font-medium">{order.a_notes || "-"}</p>
+                     </div>
+                     <div>
+                       <p className="text-xs text-muted-foreground">ERX Number</p>
+                       <p className="text-sm font-medium">{order.erx || "-"}</p>
+                     </div>
+                     <div>
+                       <p className="text-xs text-muted-foreground">Comments</p>
+                       <p className="text-sm font-medium">{order.comment}</p>
+                     </div>
                   </div>
                 </div>
               </div>
@@ -245,10 +276,20 @@ export default function OrderDetails() {
                   </TableBody>
                 </Table>
 
-                <div className="flex justify-between items-center pt-2 border-t border-border mt-2">
-                  <span className="font-semibold text-base">Total</span>
-                  <span className="font-bold text-xl">{Number(order.total || 0).toFixed(2)}</span>
-                </div>
+                <div className="space-y-1 pt-2 border-t border-border mt-2">
+                   <div className="flex justify-between text-sm">
+                     <span className="text-muted-foreground">Subtotal</span>
+                     <span>AED {getTotalValue('sub_total').toFixed(2)}</span>
+                   </div>
+                   <div className="flex justify-between text-sm">
+                     <span className="text-muted-foreground">Shipping</span>
+                     <span>AED {getTotalValue('shipping').toFixed(2)}</span>
+                   </div>
+                   <div className="flex justify-between font-bold text-base pt-1">
+                     <span>Total</span>
+                     <span>AED {getTotalValue('total').toFixed(2)}</span>
+                   </div>
+                 </div>
               </div>
             </CardContent>
           </Card>
@@ -261,35 +302,91 @@ export default function OrderDetails() {
               <CardTitle className="text-base">Documents</CardTitle>
             </CardHeader>
             <CardContent className="pb-4 px-5">
-              <div className="space-y-2.5">
-                <div 
-                  className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                  onClick={() => setPreviewDocument("Prescription.pdf")}
-                >
-                  <div className="h-9 w-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">Prescription.pdf</p>
-                    <p className="text-xs text-muted-foreground">2.4 MB</p>
-                  </div>
+              {attachments.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No documents attached</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {/* Prescriptions */}
+                  {prescriptions.map((attachment, index) => (
+                    <div 
+                      key={`prescription-${index}`}
+                      className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => setPreviewDocument({ 
+                        url: attachment.attachment_url, 
+                        name: `Prescription ${index + 1}`,
+                        type: attachment.attachment_type
+                      })}
+                    >
+                      <div className="h-9 w-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                        {attachment.attachment_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                          <img 
+                            src={attachment.attachment_url} 
+                            alt="Prescription" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <FileText className="h-4 w-4 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">Prescription {index + 1}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{attachment.attachment_type}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(attachment);
+                        }}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  
+                  {/* Other Attachments */}
+                  {otherAttachments.map((attachment, index) => (
+                    <div 
+                      key={`attachment-${index}`}
+                      className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => setPreviewDocument({ 
+                        url: attachment.attachment_url, 
+                        name: attachment.attachment_type.charAt(0).toUpperCase() + attachment.attachment_type.slice(1),
+                        type: attachment.attachment_type
+                      })}
+                    >
+                      <div className="h-9 w-9 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                        {attachment.attachment_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                          <img 
+                            src={attachment.attachment_url} 
+                            alt="Attachment" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <FileText className="h-4 w-4 text-green-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate capitalize">{attachment.attachment_type}</p>
+                        <p className="text-xs text-muted-foreground">Attachment</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(attachment);
+                        }}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-                
-                {order.order_status === "Delivered" && (
-                  <div 
-                    className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                    onClick={() => setPreviewDocument("Consent Form.pdf")}
-                  >
-                    <div className="h-9 w-9 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0">
-                      <FileText className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">Consent Form.pdf</p>
-                      <p className="text-xs text-muted-foreground">1.2 MB</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -352,12 +449,12 @@ export default function OrderDetails() {
         <DialogContent className="max-w-4xl h-[80vh]">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle>{previewDocument}</DialogTitle>
+              <DialogTitle>{previewDocument?.name}</DialogTitle>
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={() => previewDocument && handleDownload(previewDocument)}
+                onClick={() => previewDocument && window.open(previewDocument.url, '_blank')}
               >
                 <Download className="h-4 w-4" />
                 Download
@@ -366,11 +463,19 @@ export default function OrderDetails() {
           </DialogHeader>
           <div className="flex-1 overflow-auto bg-muted rounded-lg">
             {previewDocument && (
-              <iframe
-                src="/placeholder.svg"
-                className="w-full h-full min-h-[600px]"
-                title={previewDocument}
-              />
+              previewDocument.url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                <img
+                  src={previewDocument.url}
+                  alt={previewDocument.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <iframe
+                  src={previewDocument.url}
+                  className="w-full h-full min-h-[600px]"
+                  title={previewDocument.name}
+                />
+              )
             )}
           </div>
         </DialogContent>

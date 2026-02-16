@@ -11,14 +11,24 @@ import {
 } from "@/components/ui/table";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Order as ApiOrder, OrderTotal, OrderListItem, OrdersTableProps } from "@/api/types";
+import { Order as ApiOrder, OrderListItem, OrdersTableProps } from "@/api/types";
 
 const mapApiOrderToOrder = (apiOrder: ApiOrder): OrderListItem => {
-  // Calculate total from OrderTotal array
-  const totalValue =
-    apiOrder.total && Array.isArray(apiOrder.total)
-      ? apiOrder.total.reduce((sum: number, item: OrderTotal) => sum + item.value, 0)
-      : 0;
+  // In orders list API, total is a number (not array like in single order details)
+  // Also check item_total as fallback
+  let totalValue = 0;
+  
+  if (typeof apiOrder.total === 'number') {
+    // Orders list returns total as a number
+    totalValue = apiOrder.total;
+  } else if (typeof apiOrder.item_total === 'number') {
+    // Fallback to item_total
+    totalValue = apiOrder.item_total;
+  } else if (Array.isArray(apiOrder.total)) {
+    // Single order details returns total as array
+    const totalItem = apiOrder.total.find((t: any) => t.code === 'total');
+    totalValue = totalItem?.value || 0;
+  }
 
   return {
     id: `#${apiOrder.order_id_internal}`,
@@ -47,12 +57,17 @@ const getStatusColor = (status: string) => {
   return statusMap[status] || "bg-gray-100 text-gray-800";
 };
 
-export function OrdersTable({ statusFilter }: OrdersTableProps) {
+export function OrdersTable({ statusFilter, filteredOrders: externalFilteredOrders }: OrdersTableProps) {
   const { orders } = useSelector((state: any) => state.orders);
-  const mappedOrders = orders.map(mapApiOrderToOrder);
+  
+  // Use external filtered orders if provided (from parent), otherwise filter internally
+  const ordersToDisplay = externalFilteredOrders || orders;
+  const mappedOrders = ordersToDisplay.map(mapApiOrderToOrder);
 
-  const filteredOrders =
-    statusFilter === "all"
+  // If external filtered orders provided, don't filter again
+  const filteredOrders = externalFilteredOrders 
+    ? mappedOrders 
+    : statusFilter === "all"
       ? mappedOrders
       : mappedOrders.filter((order) =>
           statusFilter === "new"

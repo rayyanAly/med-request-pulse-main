@@ -9,6 +9,7 @@ import {
   CancelOrderRequest,
   CancelOrderResponse,
   CreateOrderResponse,
+  OrderFiles,
 } from './types';
 
 // Use query params format: api_panel/v2/?c=orders&m=...
@@ -63,13 +64,18 @@ export const fetchOrderTrack = async (orderId: string): Promise<ApiResponse<Orde
  * Create new order
  * POST /?c=orders&m=create
  * 
- * Required fields: first_name, last_name, contact_number, building, unit
+ * Required fields: first_name, last_name, contact_number
  * Products: JSON string with format [{"sku": "12345", "qty": 1}]
  * Payment methods: cash, card, online, pal, paid_already
+ * 
+ * File uploads (use specific field names):
+ * - prescription: For prescription orders
+ * - insurance: For insured orders
+ * - emirates_id: For new customers
  */
 export const createOrder = async (
   orderData: CreateOrderRequest,
-  files: File[] = []
+  files: OrderFiles = {}
 ): Promise<ApiResponse<CreateOrderResponse>> => {
   const formData = new FormData();
 
@@ -77,10 +83,8 @@ export const createOrder = async (
   formData.append('first_name', String(orderData.first_name || ''));
   formData.append('last_name', String(orderData.last_name || ''));
   formData.append('contact_number', String(orderData.contact_number || ''));
-  formData.append('building', String(orderData.building || ''));
-  formData.append('unit', String(orderData.unit || ''));
 
-  // Products - convert CartItem[] to backend format {sku, qty}
+  // Products - MUST use "sku" and "qty" (NOT product_id and quantity)
   const productsArray = orderData.products.map((p: CartItem) => ({
     sku: String(p.sku),
     qty: Number(p.qty)
@@ -92,31 +96,52 @@ export const createOrder = async (
     formData.append('payment_method', String(orderData.payment_method));
   }
 
-  // Insurance and Prescription flags
+  // Insurance and Prescription flags (as '0' or '1' strings)
   formData.append('with_insurance', orderData.with_insurance ? '1' : '0');
   formData.append('with_prescription', orderData.with_prescription ? '1' : '0');
 
   // Optional fields
   if (orderData.eid_no) {
-    formData.append('eid_no', String(orderData.eid_no));
+    formData.append('eid', String(orderData.eid_no));
   }
   if (orderData.erx) {
     formData.append('erx', String(orderData.erx));
   }
   if (orderData.notes) {
-    formData.append('notes', String(orderData.notes));
+    formData.append('comments', String(orderData.notes));
+  }
+  if (orderData.policy_number) {
+    formData.append('policy_number', String(orderData.policy_number));
+  }
+  if (orderData.deliver_date) {
+    formData.append('deliver_date', String(orderData.deliver_date));
+  }
+  if (orderData.delivery_time) {
+    formData.append('delivery_time', String(orderData.delivery_time));
+  }
+  
+  // Session ID for pre-uploaded prescriptions (via upload_temp)
+  // Use 'session' field name - same ID used when uploading via upload_temp
+  if (orderData.session) {
+    formData.append('session', String(orderData.session));
   }
 
-  // Add files for prescription uploads
-  if (files.length > 0) {
-    files.forEach((file, index) => {
-      formData.append(`file_${index}`, file);
-    });
+  // File attachments with specific field names
+  // IMPORTANT: Don't set Content-Type header - let browser set it for FormData
+  if (files.prescription) {
+    formData.append('prescription', files.prescription);
+  }
+  if (files.insurance) {
+    formData.append('insurance', files.insurance);
+  }
+  if (files.emirates_id) {
+    formData.append('emirates_id', files.emirates_id);
   }
 
   return apiRequest('/?c=orders&m=create', {
     method: 'POST',
     body: formData,
+    // Note: Don't set Content-Type header - browser will set it with correct boundary for FormData
   });
 };
 
@@ -153,4 +178,54 @@ export const fetchDashboardStats = async (): Promise<ApiResponse<{
   average_value: number;
 }>> => {
   return apiRequest('/?c=stats');
+};
+
+/**
+ * Upload temporary prescription image
+ * POST /?c=orders&m=upload_temp
+ * 
+ * Use this to pre-upload prescription images before creating an order.
+ * Supports up to 3 prescription images per order.
+ * 
+ * @param file - The prescription image file
+ * @param session - Unique session ID to group multiple uploads
+ * @returns Response with inserted_id and file path
+ */
+export const uploadTempPrescription = async (
+  file: File,
+  session: string
+): Promise<ApiResponse<{ inserted_id: string; file: string }>> => {
+  const formData = new FormData();
+  formData.append('prescription', file);
+  formData.append('session', session);
+
+  return apiRequest('/?c=orders&m=upload_temp', {
+    method: 'POST',
+    body: formData,
+  });
+};
+
+/**
+ * Delete temporary uploaded file
+ * GET /?c=orders&m=delete_temp&id={inserted_id}&session={session}
+ * 
+ * Use this to remove a previously uploaded file when user removes it from the form.
+ * 
+ * @param insertedId - The inserted_id from upload_temp response
+ * @param session - The session ID used during upload
+ * @returns Response with success status
+ */
+export const deleteTempFile = async (
+  insertedId: string,
+  session: string
+): Promise<ApiResponse<{ success: boolean }>> => {
+  return apiRequest(`/?c=orders&m=delete_temp&id=${insertedId}&session=${session}`);
+};
+
+/**
+ * Generate unique session ID for temp uploads
+ * Format: timestamp only (e.g., 1771063659)
+ */
+export const generateSessionId = (): string => {
+  return String(Date.now());
 };
