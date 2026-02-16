@@ -441,14 +441,14 @@ export default function CreateOrder() {
 
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="notes" className="text-xs">Notes</Label>
+                    <Label htmlFor="notes" className="text-xs">Comments</Label>
                     <span className="text-xs text-amber-600 font-medium">(Visible to customer)</span>
                   </div>
                   <Textarea
                     id="notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add any additional notes..."
+                    placeholder="Add any additional comments..."
                     rows={2}
                     className="text-sm resize-none"
                   />

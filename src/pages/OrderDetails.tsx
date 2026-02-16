@@ -185,11 +185,11 @@ export default function OrderDetails() {
     return statusId < 3 && order.cancel_key && order.order_status !== 'Cancelled';
   };
 
-  // Clean comment by removing <br /> tags (backend adds ERX with br tag)
+  // Clean comment by converting <br /> tags to newlines (backend adds ERX with br tag)
   const cleanComment = (comment: string | undefined) => {
     if (!comment) return '-';
-    // Remove <br /> tags and replace with space, then clean up multiple spaces
-    return comment.replace(/<br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
+    // Replace <br /> tags with newline character
+    return comment.replace(/<br\s*\/?>/gi, '\n').trim();
   };
 
   // Handle cancel order
@@ -297,10 +297,10 @@ export default function OrderDetails() {
                        <p className="text-xs text-muted-foreground">ERX Number</p>
                        <p className="text-sm font-medium">{order.erx || "-"}</p>
                      </div>
-                     <div>
-                        <p className="text-xs text-muted-foreground">Comments</p>
-                        <p className="text-sm font-medium">{cleanComment(order.comment)}</p>
-                      </div>
+                      <div>
+                         <p className="text-xs text-muted-foreground">Comments</p>
+                         <p className="text-sm font-medium whitespace-pre-line">{cleanComment(order.comment)}</p>
+                       </div>
                   </div>
                 </div>
               </div>
@@ -514,9 +514,9 @@ export default function OrderDetails() {
       {/* Document Preview Dialog */}
       <Dialog open={!!previewDocument} onOpenChange={() => setPreviewDocument(null)}>
         <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>{previewDocument?.name}</DialogTitle>
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+            <DialogTitle>{previewDocument?.name}</DialogTitle>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -525,6 +525,14 @@ export default function OrderDetails() {
               >
                 <Download className="h-4 w-4" />
                 Download
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-white bg-red-500 hover:bg-red-600 hover:text-white"
+                onClick={() => setPreviewDocument(null)}
+              >
+                Close
               </Button>
             </div>
           </DialogHeader>
