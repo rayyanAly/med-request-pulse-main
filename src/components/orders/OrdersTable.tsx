@@ -38,11 +38,12 @@ const mapApiOrderToOrder = (apiOrder: ApiOrder): OrderListItem => {
     status: apiOrder.order_status,
     dateTime: apiOrder.date_added,
     preparedBy: apiOrder.agent_name || undefined,
-    preparedAt: apiOrder.activities?.prepared_at || undefined,
-    dispatchedAt: apiOrder.activities?.dispatched || undefined,
-    deliveredAt: apiOrder.activities?.delivered_at || undefined,
+    preparedAt: apiOrder.prepared_at || undefined,
+    dispatchedAt: apiOrder.dispatched || undefined,
+    deliveredAt: apiOrder.accepted_at || undefined,
+    receivedAt: apiOrder.received_at || undefined,
   };
-};
+}
 
 const getStatusColor = (status: string) => {
   const statusMap: Record<string, string> = {
@@ -51,6 +52,7 @@ const getStatusColor = (status: string) => {
     "Ready for Dispatch": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
     "Dispatch": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
     "Delivered": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    "Complete": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
     "Canceled": "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
     "On Hold": "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
   };
@@ -80,6 +82,8 @@ export function OrdersTable({ statusFilter, filteredOrders: externalFilteredOrde
             ? order.status === "Dispatch"
             : statusFilter === "delivered"
             ? order.status === "Delivered"
+            : statusFilter === "complete"
+            ? order.status === "Complete"
             : statusFilter === "canceled"
             ? order.status === "Canceled"
             : statusFilter === "hold"
@@ -96,7 +100,7 @@ export function OrdersTable({ statusFilter, filteredOrders: externalFilteredOrde
             <TableHead>Customer Name</TableHead>
             <TableHead>Value</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Date / Time</TableHead>
+            <TableHead>Received at</TableHead>
             <TableHead>Prepared by</TableHead>
             <TableHead>Prepared at</TableHead>
             <TableHead>Dispatched at</TableHead>
@@ -129,7 +133,7 @@ export function OrdersTable({ statusFilter, filteredOrders: externalFilteredOrde
                   {order.status}
                 </Badge>
               </TableCell>
-              <TableCell className="text-sm">{order.dateTime}</TableCell>
+              <TableCell className="text-sm">{order.receivedAt || order.dateTime}</TableCell>
               <TableCell>{order.preparedBy || "-"}</TableCell>
               <TableCell>{order.preparedAt || "-"}</TableCell>
               <TableCell>{order.dispatchedAt || "-"}</TableCell>

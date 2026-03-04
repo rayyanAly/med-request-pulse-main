@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Mobile viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Orders | Partnership Panel</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/components/normalize.min.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+
+    <!-- Javascript -->
+    <script src="js/components/jquery-3.4.1.min.js"></script>
+    <script src="js/main.js"></script>
+
+</head>
+
+<body>
+
+    <section class="primary-sidebar hidden">
+
+        <div class="menu-wrap hidden">
+
+            <div class="menu-toggle">
+                <button class="ico btn-menu"></button>
+            </div> <!-- Menu Toggle Button -->
+
+            <div class="logo">
+                <a href="#">
+                    <img src="images/logo.png" alt="Partnership" />
+                </a>
+            </div><!-- Logo -->
+
+        </div>
+
+        <nav class="primary-nav hidden">
+            <ul>
+                <li class="active"><a href="#"><span class="ico ico-meter"></span>Dashboard</a></li>
+                <li><a href="#"><span class="ico ico-orders"></span> orders</a></li>
+                <li><a href="#"><span class="ico ico-seller"></span> seller accounts</a></li>
+                <li><a href="#"><span class="ico ico-store"></span>store information</a></li>
+                <li><a href="#"><span class="ico ico-settings"></span>settings</a></li>
+            </ul>
+        </nav><!-- Primary Navigation -->
+
+    </section> <!-- Primary Sidebar -->
+
+    <section class="dashboard-container">
+
+        <header class="dashboard-header">
+            <div class="db-wrap">
+
+                <div class="searchbar">
+                    <span class="ico ico-search"></span>
+                    <input type="text" name="inputfield" class="inputfield" placeholder="search...">
+                </div> <!-- Input Field -->
+
+                <div class="user-options-bar">
+
+                    <div class="user-control">
+                        <span class="ico ico-chat"></span>
+                        <span class="ico ico-notify">
+                            <i class="notify-bubble"></i>
+                        </span>
+                    </div> <!-- User Control -->
+
+                    <div class="user-menu">
+                        <a href="#">John Doe <span class="ico ico-arrow"></span></a>
+                        <img src="images/avatar.jpg" alt="avatar" />
+                    </div> <!-- User Menu -->
+
+                </div> <!-- User Options Bar -->
+
+            </div>
+        </header> <!-- Dashboard Header -->
+
+        <div class="dashboard-content-area">
+
+            <div class="content-row">
+
+                <div class="box insight-box">
+
+                    <div class="box-head ib-head">
+                        <div class="datepicker">
+                            <input type="date" name="datepicker" id="datepicker">
+                        </div>
+                    </div>
+
+                    <div class="ib-content">
+                        <img src="images/sales.jpg" alt="Sales">
+                        <h1>
+                            Total Sales
+                            <span class="insight-count">0000</span>
+                        </h1>
+                    </div>
+
+                </div> <!-- Insight Box -->
+
+                <div class="box insight-box">
+
+                    <div class="box-head ib-head">
+                        <div class="datepicker">
+                            <input type="date" name="datepicker">
+                        </div>
+                    </div>
+
+                    <div class="ib-content">
+                        <img src="images/document.jpg" alt="document">
+                        <h1>
+                            Total Orders
+                            <div class="insight-count">0000</div>
+                        </h1>
+                    </div>
+
+                </div> <!-- Insight Box -->
+
+                <div class="box insight-box">
+
+                    <div class="box-head ib-head">
+                        <div class="datepicker">
+                            <input type="date" name="datepicker">
+                        </div>
+                    </div>
+
+                    <div class="ib-content">
+                        <img src="images/order.jpg" alt="Orders">
+                        <h1>
+                            Avg Order Value
+                            <div class="insight-count">0000</div>
+                        </h1>
+                    </div>
+
+                    <div class="view-link">
+                        <a href="#" class="view-link">view</a>
+                    </div>
+
+                </div> <!-- Insight Box -->
+
+                <div class="box insight-box">
+
+                    <div class="box-head ib-head">
+                        <div class="datepicker">
+                            <input type="date" name="datepicker">
+                        </div>
+                    </div>
+
+                    <div class="ib-content">
+                        <img src="images/customers.jpg" alt="Customers">
+                        <h1>
+                            Total Customers
+                            <div class="insight-count">0000</div>
+                        </h1>
+                    </div>
+
+                </div> <!-- Insight Box -->
+
+            </div> <!-- Insights -->
+
+            <div class="content-row">
+
+                <div class="box sales-overview">
+                    <div class="box-head">
+                        <h2>Sales Overview</h2>
+                        <div class="datepicker">
+                            <input type="date" name="" id="">
+                        </div>
+                    </div>
+
+                    <div class="sales-chart">
+                        <div id="chart_div"></div>
+                    </div> <!-- Sales Overview Chart -->
+
+                </div> <!-- Sales Overview -->
+
+                <div class="box top-product">
+
+                    <div class="box-head">
+                        <h2>Top Products</h2>
+                    </div>
+
+                    <div class="tp-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;"></th>
+                                    <th>SKU</th>
+                                    <th>Products Details</th>
+                                    <th>Unit Sales</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <td></td>
+                                    <td>44422208</td>
+                                    <td>
+                                       <img src="images/prod1.jpg" alt="product thumbnail" />
+                                       <span class="prod-title">Cationorm Eye Drops</span>
+                                    </td>
+                                    <td>00</td>
+                                    <td>AED: 000.00</td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>44422208</td>
+                                    <td>
+                                        <img src="images/prod2.jpg" alt="product thumbnail" />
+                                        <span class="prod-title">Vigamox 0.5%</span>
+                                    </td>
+                                    <td>00</td>
+                                    <td>AED: 000.00</td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>44422208</td>
+                                    <td>
+                                        <img src="images/prod3.jpg" alt="product thumbnail" />
+                                        <span class="prod-title">Fucithalmic Eye Drops</span>
+                                    </td>
+                                    <td>00</td>
+                                    <td>AED: 000.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div> <!-- Top Product -->
+
+            </div> <!-- Content Row -->
+
+            <div class="content-row">
+
+                <div class="box top-areas">
+                    <div class="box-head">
+                        <h2>Top Areas</h2>
+                    </div>
+                    <div id="ta-chart" class="ta-chart"></div> <!-- Top Area Cahrt -->
+                </div> <!-- Top Areas -->
+
+                <div class="box top-categories">
+                    <div class="box-head">
+                        <h2>Top Categories</h2>
+                    </div>
+
+                    <div id="tc-chart" class="tc-chart"></div> <!-- Top Categories Chart -->
+
+                </div> <!-- Top Categories -->
+
+                <div class="box average-value">
+                    <div class="box-head">
+                        <h2>Average Order Value</h2>
+                    </div>
+                    <div id="areachart" class="aov-chart"></div>
+                </div> <!-- Top Areas -->
+
+            </div> <!-- Content Row -->
+
+        </div> <!-- Dashboard Content Area -->
+
+    </section> <!-- Admin Panel's Container  -->
+
+</body>
+
+<script type="text/javascript" src="js/components//loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {packages: ['corechart', 'bar']});
+google.charts.setOnLoadCallback(drawMaterial);
+
+function drawMaterial() {
+      var data = new google.visualization.DataTable();
+      data.addColumn('timeofday', 'Time of Day');
+      data.addColumn('number', 'Motivation Level');
+      data.addColumn('number', 'Energy Level');
+
+      data.addRows([
+        [{v: [8, 0, 0], f: '8 am'}, 1, .25],
+        [{v: [9, 0, 0], f: '9 am'}, 2, .5],
+        [{v: [10, 0, 0], f:'10 am'}, 3, 1],
+        [{v: [11, 0, 0], f: '11 am'}, 4, 2.25],
+        [{v: [12, 0, 0], f: '12 pm'}, 5, 2.25],
+        [{v: [13, 0, 0], f: '1 pm'}, 6, 3],
+        [{v: [14, 0, 0], f: '2 pm'}, 7, 4],
+        [{v: [15, 0, 0], f: '3 pm'}, 8, 5.25],
+        [{v: [16, 0, 0], f: '4 pm'}, 9, 7.5],
+        [{v: [17, 0, 0], f: '5 pm'}, 10, 10],
+      ]);
+
+      var options = {
+        title: 'Motivation and Energy Level Throughout the Day',
+        hAxis: {
+          title: 'Time of Day',
+          format: 'h:mm a',
+          viewWindow: {
+            min: [7, 30, 0],
+            max: [17, 30, 0]
+          }
+        },
+        vAxis: {
+          title: 'Rating (scale of 1-10)'
+        }
+      };
+
+      var materialChart = new google.charts.Bar(document.getElementById('chart_div'));
+      materialChart.draw(data, options);
+
+        // Donut Chart
+
+        var data = google.visualization.arrayToDataTable([
+            ['Task', 'Hours per Day'],
+            ['Work', 11],
+            ['Eat', 2],
+            ['Commute', 2],
+            ['Watch TV', 2],
+            ['Sleep', 7]
+        ]);
+
+        var options = {
+            title: 'My Daily Activities',
+            pieHole: 0.4,
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('ta-chart'));
+
+        chart.draw(data, options);
+
+        // Donut Chart
+
+        var data = google.visualization.arrayToDataTable([
+            ['Task', 'Hours per Day'],
+            ['Work', 11],
+            ['Eat', 2],
+            ['Commute', 2],
+            ['Watch TV', 2],
+            ['Sleep', 7]
+        ]);
+
+        var options = {
+            title: 'My Daily Activities',
+            pieHole: 0.4,
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('tc-chart'));
+        chart.draw(data, options);
+
+        //Area Chart
+
+    
+        var data = google.visualization.arrayToDataTable([
+          ['Year', 'Sales', 'Expenses'],
+          ['2013',  1000,      400],
+          ['2014',  1170,      460],
+          ['2015',  660,       1120],
+          ['2016',  1030,      540]
+        ]);
+
+        var options = {
+          title: 'Company Performance',
+          hAxis: {title: 'Year',  titleTextStyle: {color: '#333'}},
+          vAxis: {minValue: 0}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('areachart'));
+        chart.draw(data, options);
+    
+
+    };
+
+    $(window).resize(function(){
+        drawMaterial();
+    });
+    $(".dashboard-container").resize(function(){
+        drawMaterial();
+    });
+    
+</script>
+
+</html>

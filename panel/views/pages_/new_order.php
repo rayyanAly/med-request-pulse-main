@@ -1,0 +1,844 @@
+<link href="<?php echo base_url();?>theme/css/intlTelInput.css" rel="stylesheet"/>
+<script src="<?php echo base_url();?>theme/js/intlTelInput.js">
+</script>
+<div class="row curve-with-shadow n-row white">
+    <div class="col-md-6">
+        <h4>
+            Create New Order
+        </h4>
+    </div>
+    <div class="col-md-6 text-right">
+        <!-- <button class=" btn btn-primary" id="add_products" name="add_products">
+            + Add Products
+        </button> -->
+    </div>
+</div>
+<form class="create-order" id="create_order" method="POST" name="create_order">
+    <div class="row curve-with-shadow n-row white">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="email">
+                    Customer Mobile Number
+                    <span class="required">
+                        *
+                    </span>
+                </label>
+                <input autocomplete="off" class="form-control" id="mobile_number" maxlength="15" name="mobile_number" type="mumber">
+                </input>
+            </div>
+            <div class="form-group">
+                <label for="notes">
+                    Notes
+                </label>
+                <textarea class="form-control" id="notes" name="notes" rows="7"></textarea>
+            </div>
+
+            <div class="row" >
+                <label for="add-products-container">
+                    <input type="checkbox" value="1" id="enable_add_devices" name="enable_add_devices" />Add Product(s)
+                </label>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="erx">
+                    ERX No
+                </label>
+                <input class="form-control" id="erx_number" maxlength="10" name="erx_number" type="text">
+                </input>
+            </div>
+            <div class="form-group ">
+                <label for="prescription">
+                    Upload Documents
+                </label>
+                <div class="row">
+                    <div class="col-md-3 files color">
+                        <input class="form-control" id="prescription" multiple name="prescription" title=" " type="file"/>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="image-container-attachment">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+
+
+
+
+
+
+
+    <div class="box-body row" id="footer_div">
+
+            <div class="col-md-6">
+
+
+                    <div class="form-group has-search">
+                        <span class="fa fa-search form-control-feedback"></span>
+                        <input class="form-control" type="text" name="search_product" id="search_product" placeholder="Seach products" />
+                      </div>
+
+                </div>
+
+
+
+                <div class="col-md-6 controls">
+                    <input type="button" id="decrease_value" value="-" />
+                    <input type="text" id="current_value" class="current-value" readonly="readonly" name="current_value" value="1" />
+                    <input type="button"  id="increase_value" value="+" />
+                    <input type="button" value="Add" id="add_item" />
+                </div>
+
+            <!-- product table -->
+            <table class="table table-bordered" id="item_table" class="item-table">
+            <thead>
+                <tr>
+                    <th width="8%" >
+                        Image
+                    </th>
+
+                    <th>
+                        Product Name
+                    </th>
+
+                    <th width="10%">
+                        Qty
+                    </th>
+
+                    <th width="10%">
+                        Price
+                    </th>
+
+                    <th width="10%">
+                        Total
+                    </th>
+
+                    <th width="5%">
+                        
+                    </th>
+
+                  
+                    
+            </thead>
+            <tbody>
+                
+
+                            
+
+
+                            
+            </tbody>
+        </table>
+
+
+
+
+
+    <div class="col-md-6 col-lg-6 col-sm-12">
+                &nbsp;
+            </div>
+            <div class="col-md-6 col-lg-6 col-sm-12">
+
+                <table class="total-table" cellpadding="8" id="total_table">
+                    <tr>
+                        <td>Sub Total</td>
+                        <td class="value"><div id="sub_total_value"></div></td>
+                    </tr>
+                    <tr>
+                        <td>Delivery Charges</td>
+                        <td class="value"><div id="delivery_charges_value"></div></td>
+                    </tr>
+                    <tr class="discount">
+                        <td>Discount</td>
+                        <td class="value"><div id="discount_value"></div></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><div class="divider"></div></td>
+                        
+                    </tr>
+                    <tr class="total">
+                        <td>Total</td>
+                        <td class="value"><div id="total_value"></div></td>
+                    </tr>
+<!--                     <tr>
+                        <td colspan="2"><input type="button" class="submit-button" id="submit_button" onclick="submit_form_data()" value="Submit" /></td>
+                    </tr> -->
+                </table>
+
+            </div>
+
+
+    </div>
+
+
+
+
+
+    <div class="col-md-6">&nbsp;</div>
+    <div class="col-md-6 form-group button-container">
+                <input id="payment_method" name="payment_method" type="hidden" value="cash"/>
+                <input id="with_insurance" name="with_insurance" type="hidden" value="0"/>
+                <input type="hidden" name="session" id="session" value="<?php echo $current_session;?>" />
+
+                <input id="delivery_charges" name="delivery_charges" value ="<?php echo $delivery_charges;?>" type="hidden" />
+                <input class="btn btn-primary submit-button" id="submit_button" onclick="submit_form_data()" type="button" value="Submit">
+                    <input class="btn btn-link link-button" id="cancel_button" type="button" value="Cancel">
+                    </input>
+                </input>
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+</form>
+<!-- modal window -->
+<div aria-hidden="true" aria-labelledby="exampleModalCenterTitle" class="modal fade" id="mi-modal" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="confirmation-box">
+                    <div class="image-container">
+                        <img class="image" src="<?php echo base_url();?>theme/images/confirmation-icon.png"/>
+                    </div>
+                    <h4>
+                        Thank You!
+                    </h4>
+                    <p>
+                        Order Submitted Successfully!
+                    </p>
+                    <button class="continue-button" id="continue_button" name="continue_button">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- cacnel modal window -->
+<div aria-hidden="true" aria-labelledby="exampleModalCenterTitle" class="modal fade" id="cancel-modal" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="confirmation-box">
+                    <div class="image-container">
+                        <img class="image" src="<?php echo base_url();?>theme/images/error-icon.png"/>
+                    </div>
+                    <h4>
+                        Are you sure?
+                    </h4>
+                    <p>
+                        Do you really want to delete this request? The process cannot be undone.
+                    </p>
+                    <div class="buttons">
+                        <button class="delete-button" id="delete_button" name="delete_button">
+                            Delete
+                        </button>
+                        <button class="can-button" id="can_button" name="can_button">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- uploading -->
+<div aria-hidden="true" aria-labelledby="exampleModalCenterTitle" class="modal fade" id="mi-modal-uploading" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="confirmation-box">
+                    <div class="image-container">
+                        <img class="image" src="<?php echo base_url();?>theme/images/confirmation-icon.png"/>
+                    </div>
+                    <h4>
+                        Uploading!
+                    </h4>
+                    <p>
+                        Please wait....
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- end cancel model window -->
+<!-- end modal widow -->
+<script type="text/javascript">
+
+
+var countries = <?php echo $products;?>;
+var quantity = 1;
+var itemArray = [];
+var imageArray = [];
+
+function autocomplete(inp, arr) {
+    /*the autocomplete function takes two arguments,
+    the text field element and an array of possible autocompleted values:*/
+    var currentFocus;
+    /*execute a function when someone writes in the text field:*/
+    inp.addEventListener("input", function(e) {
+        var a, b, i, val = this.value;
+        /*close any already open lists of autocompleted values*/
+        closeAllLists();
+        if (!val) {
+            return false;
+        }
+        currentFocus = -1;
+        /*create a DIV element that will contain the items (values):*/
+        a = document.createElement("DIV");
+        a.setAttribute("id", this.id + "autocomplete-list");
+        a.setAttribute("class", "autocomplete-items");
+        /*append the DIV element as a child of the autocomplete container:*/
+        this.parentNode.appendChild(a);
+        /*for each item in the array...*/
+        for (i = 0; i < arr.length; i++) {
+            /*check if the item starts with the same letters as the text field value:*/
+            if (arr[i].full_name.substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+                /*create a DIV element for each matching element:*/
+                b = document.createElement("DIV");
+                /*make the matching letters bold:*/
+                b.innerHTML = "<strong>" + arr[i].full_name.substr(0, val.length) + "</strong>";
+                b.innerHTML += arr[i].full_name.substr(val.length);
+                /*insert a input field that will hold the current array item's value:*/
+                b.innerHTML += "<input type='hidden' value='" + arr[i].full_name + "'>";
+                /*execute a function when someone clicks on the item value (DIV element):*/
+                b.addEventListener("click", function(e) {
+                    /*insert the value for the autocomplete text field:*/
+                    inp.value = this.getElementsByTagName("input")[0].value;
+                    /*close the list of autocompleted values,
+                    (or any other open lists of autocompleted values:*/
+                    closeAllLists();
+                });
+                a.appendChild(b);
+            }
+        }
+    });
+    /*execute a function presses a key on the keyboard:*/
+    inp.addEventListener("keydown", function(e) {
+        var x = document.getElementById(this.id + "autocomplete-list");
+        if (x) x = x.getElementsByTagName("div");
+        if (e.keyCode == 40) {
+            /*If the arrow DOWN key is pressed,
+            increase the currentFocus variable:*/
+            currentFocus++;
+            /*and and make the current item more visible:*/
+            addActive(x);
+        } else if (e.keyCode == 38) { //up
+            /*If the arrow UP key is pressed,
+            decrease the currentFocus variable:*/
+            currentFocus--;
+            /*and and make the current item more visible:*/
+            addActive(x);
+        } else if (e.keyCode == 13) {
+            /*If the ENTER key is pressed, prevent the form from being submitted,*/
+            e.preventDefault();
+            if (currentFocus > -1) {
+                /*and simulate a click on the "active" item:*/
+                if (x) x[currentFocus].click();
+            }
+        }
+    });
+
+    function addActive(x) {
+        /*a function to classify an item as "active":*/
+        if (!x) return false;
+        /*start by removing the "active" class on all items:*/
+        removeActive(x);
+        if (currentFocus >= x.length) currentFocus = 0;
+        if (currentFocus < 0) currentFocus = (x.length - 1);
+        /*add class "autocomplete-active":*/
+        x[currentFocus].classList.add("autocomplete-active");
+    }
+
+    function removeActive(x) {
+        /*a function to remove the "active" class from all autocomplete items:*/
+        for (var i = 0; i < x.length; i++) {
+            x[i].classList.remove("autocomplete-active");
+        }
+    }
+
+    function closeAllLists(elmnt) {
+        /*close all autocomplete lists in the document,
+        except the one passed as an argument:*/
+        var x = document.getElementsByClassName("autocomplete-items");
+        for (var i = 0; i < x.length; i++) {
+            if (elmnt != x[i] && elmnt != inp) {
+                x[i].parentNode.removeChild(x[i]);
+            }
+        }
+    }
+    /*execute a function when someone clicks in the document:*/
+    document.addEventListener("click", function(e) {
+        closeAllLists(e.target);
+    });
+}
+autocomplete(document.getElementById("search_product"), countries);
+
+
+
+
+
+
+
+
+
+
+
+
+    $(function() {
+
+
+
+    $('#mobile_number').on('focus', function(){
+        $(this).removeClass('error');
+    });
+
+
+    $('#erx_number').on('focus', function(){
+        $(this).removeClass('error');
+    });
+
+
+    $('#notes').on('focus', function(){
+        $(this).removeClass('error');
+    });
+
+    $('#prescription').on('click', function(){
+        $(this).removeClass('error');
+    });
+
+
+
+    
+    $("#mobile_number").intlTelInput();
+    $('#mobile_number').keyup(function(e)
+                                {
+          if (/\D/g.test(this.value))
+          {
+            // Filter non-digits from input value.
+            this.value = this.value.replace(/\D/g, '');
+          }
+    
+    });
+
+
+
+    // // Multiple images preview in browser
+    // var imagesPreview = function(input, placeToInsertImagePreview) {
+
+
+    //     if (input.files) {
+    //         var filesAmount = input.files.length;
+
+    //         for (i = 0; i < filesAmount; i++) {
+    //             var reader = new FileReader();
+
+    //             reader.onload = function(event) {
+    //                 alert(event.target.result);
+    //                 $(".image-container").append('<div class="image-thumb"><img src="'+ event.target.result +'" width="100" /></div>');
+    //                // $($.parseHTML('<img>')).attr('src', event.target.result).appendTo(placeToInsertImagePreview);
+    //             }
+
+    //             reader.readAsDataURL(input.files[i]);
+    //         }
+    //     }
+
+    // };
+
+    // $('#prescription').on('change', function() {
+    //     imagesPreview(this, 'div.image-container');
+
+    // });
+
+
+
+
+
+
+
+
+
+$('#add_item').on('click', function() {
+        var itemObject = $('#search_product').val().split(" - ");
+        for (var j = 0; j < itemArray.length; j++) {
+            if (itemArray[j].id == itemObject[1]) {
+                itemArray[j].quantity = $('#current_value').val();
+                $('#search_product').val('');
+                $('#current_value').val(1)
+                check_table();
+                return;
+            }
+        }
+        for (var i = 0; i < countries.length; i++) {
+            if (countries[i].id == itemObject[1]) {
+                itemArray.push({
+                    'id': countries[i].id,
+                    'name': countries[i].name,
+                    'image': countries[i].image,
+                    'price': countries[i].price,
+                    'quantity': $('#current_value').val()
+                });
+                $('#item_table > tbody:last').append('<tr id="row_' + countries[i].id + '"><td><img class="img" src="' + countries[i].image + '" /></td><td>' + countries[i].name + '</td><td>' + $('#current_value').val() + '</td><td>' + countries[i].price + '</td><td>' + (countries[i].price * parseInt($('#current_value').val())) + '</td><td><img src="<?php echo base_url();?>theme/images/close-icon.png" onclick="deleteItem(' + countries[i].id + ')" /></td></tr>');
+            }
+        }
+        $('#search_product').val('');
+        $('#current_value').val(1)
+        quantity = 1;
+        check_table();
+    });
+    check_table();
+
+
+
+
+
+
+
+
+
+
+
+
+});
+
+
+
+
+    // $('#add_products').on('click', function(){
+    //     window.location = '<?php echo $create_detail_order_url;?>';
+
+    // });
+
+
+    $('#continue_button').on('click', function(){
+        $('#mi-modal').modal('hide');
+        window.location = '<?php echo $success_url;?>';
+
+    })
+
+
+
+    $('#cancel_button').on('click',function(){
+        $('#cancel-modal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+    });
+
+
+    $('#delete_button').on('click',function(){
+        $('#cancel-modal').modal('hide');
+        window.location = '<?php echo $success_url;?>';
+    })
+
+
+    $('#can_button').on('click',function(){
+        $('#cancel-modal').modal('hide');
+
+    });
+
+
+    $('#enable_add_devices').on('change', function(){
+
+        if($(this).is(':checked')){
+            $('#footer_div').show();    
+        } else {
+            $('#footer_div').hide();
+        }
+
+        
+    })
+
+
+    $('#decrease_value').on('click', function() {
+        if (quantity > 1) {
+            quantity--;
+        }
+        $('#current_value').val(quantity)
+    })
+    $('#increase_value').on('click', function() {
+        if (quantity < 100) {
+            quantity++;
+        }
+        $('#current_value').val(quantity)
+    })
+
+
+    $('#footer_div').hide();
+
+
+
+
+
+function deleteItem(item) {
+    $('#row_' + item).remove();
+    for (var z = 0; z < itemArray.length; z++) {
+        if (item == itemArray[z].id) {
+            itemArray.splice(z, 1);
+        }
+    }
+    check_table();
+}
+
+
+
+
+function check_table() {
+    // if (itemArray.length > 0) {
+    //     $('#item_table').show();
+    //     $('#total_table').show();
+    // } else {
+    //     $('#item_table').hide();
+    //     $('#total_table').hide();
+    // }
+    var total = 0;
+    for (var b = 0; b < itemArray.length; b++) {
+        total = (total + (itemArray[b].quantity * itemArray[b].price));
+    }
+    $('#sub_total_value').html(total.toFixed(2));
+    $('#delivery_charges_value').html(parseInt($('#delivery_charges').val()).toFixed(2));
+    $('#discount_value').html('0.00');
+    $('#total_value').html((parseFloat(total.toFixed(2)) + parseFloat($('#delivery_charges').val())).toFixed(2));
+}
+
+    function submit_form_data() {
+
+
+            var frm = $('#create_order')[0];
+            var formData = new FormData(frm);
+            
+            var error = false;
+
+
+        if($('#enable_add_devices').is(':checked') && itemArray.length > 0){
+            formData.append("products", JSON.stringify(itemArray));
+        }
+
+
+            if($('#mobile_number').val().length < 8){
+                $('#mobile_number').addClass('error');
+                error = true;
+
+            }else {
+                $('#mobile_number').removeClass('error');
+
+            }
+
+
+            if($('#erx_number').val().length < 3 && $('#notes').val().trim().length < 3 && imageArray.length == 0){
+                $('#erx_number').addClass('error');
+                $('#notes').addClass('error');
+                $('#prescription').addClass('error');
+                error = true;
+
+            }else {
+                $('#erx_number').removeClass('error');
+                $('#notes').removeClass('error');
+                $('#prescription').removeClass('error');
+                
+
+            }
+
+
+
+            if (error){
+
+                return;
+            }
+
+            $('#submit_button').val('wait...');
+            $('#submit_button').prop("disabled",true);
+
+
+            $.ajax({
+                type: "POST",
+                url: '<?php echo $submission_url; ?>',
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                cache: false,
+                timeout: 600000,
+                data: formData,
+                success: function(data) {
+
+                    console.log(data);
+
+                    var responseData = JSON.parse(data);
+
+                    if(responseData.success == '1'){
+
+                        
+                        $('#mi-modal').modal({
+                                       backdrop: 'static',
+                                       keyboard: false
+                        });
+
+
+                    }else {
+
+                        alert(responseData.error.message);
+
+                    }
+
+
+                    
+                },
+                error: function(data) {
+
+                $('#submit_button').val('Submit');
+                $('#submit_button').prop("disabled",false);
+
+                    console.log('An error occurred.');
+                    console.log(data);
+                },
+            });
+
+        }
+
+
+
+
+
+      var fileInput = document.getElementById('prescription');
+      fileInput.addEventListener('change', function (evnt) {
+            
+        for (var i = 0; i < fileInput.files.length; i++) {
+            sendFile(fileInput.files[i]);            
+        }
+        
+      });
+
+
+    function sendFile(file) {
+
+        var formData = new FormData();
+        var request = new XMLHttpRequest();
+     
+        formData.set('prescription', file);
+        formData.set('session', $('#session').val());
+        console.log(formData);
+        request.open("POST", '<?php echo $temp_image_url;?>');
+        request.send(formData);
+
+                $('#mi-modal-uploading').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+            request.onreadystatechange=function(){
+
+               if (request.readyState==4 && request.status==200){
+
+                $('#mi-modal-uploading').modal('hide');
+                  console.log('request.readyState=',request.readyState);
+                  console.log('request.status=',request.status);
+                  console.log('response=',request.responseText);
+
+                    var responseFromServer = JSON.parse(request.responseText);
+
+                  if (responseFromServer.success == '0'){
+                     console.log('failed to upload file');
+
+                  }else if (responseFromServer.success == '1'){
+                    var newId = (imageArray.length + 1);
+                    imageArray.push({'id': newId, 'path':responseFromServer.data.file_path, 'session': responseFromServer.data.session, 'inserted_id': responseFromServer.data.inserted_id});
+                    renderImages(responseFromServer.data.file_path, newId);
+                     console.log('successfully uploaded file');
+                     console.log(imageArray);
+
+                  }
+               }
+            }
+      
+      }
+
+
+
+      function renderImages(image, id, deletion = false){
+
+        if(!deletion){
+            $('.image-container-attachment').append('<div class="image-div" id="image_'+id+'"><div><img src="' + image + '" /></div><input type="button" class="close-button-icon" onclick="deletItem('+id+');" value="X" /></div>');
+
+        }else {
+            $('.image-container').html('');
+
+            if(imageArray.length > 0){
+
+                for(var i = 0; i < imageArray.length; i++){
+
+                    $('.image-container-attachment').append('<div class="image-div" id="image_'+id+'"><div><img src="' + imageArray[i] + '" /></div><input type="button" class="close-button-icon" onclick="deletItem(' + id + ');" value="X" /></div>');
+
+                }
+
+            }
+
+        }
+
+      }
+
+
+      function deletItem(id){
+
+            var selectedRow = 0;
+
+            for(var i = 0; i < imageArray.length; i++){
+                if(imageArray[i].id == id){
+                    selectedRow = imageArray[i].inserted_id;
+
+                }
+            }
+
+            if(selectedRow == 0 ){
+                return false;
+            }
+
+            var parameters = '&id='+ selectedRow + '&session=' + $('#session').val();
+
+            $.ajax({
+                type: "GET",
+                url: '<?php echo $delete_temp_image_url; ?>' + parameters,
+                success: function(data) {
+
+                    console.log(data);
+                    var responseData = JSON.parse(data);
+                    var keyIndex = imageArray.indexOf('key_' + id);
+                    imageArray.splice(keyIndex, 1);
+                    $('#image_' + id).remove();
+                    console.log(imageArray);
+
+                    
+                },
+                error: function(data) {
+
+                    console.log('An error occurred.');
+                },
+            });
+
+
+
+        
+
+      }
+
+
+
+</script>

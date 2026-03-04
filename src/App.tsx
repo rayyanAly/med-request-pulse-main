@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminRoute } from "./components/AdminRoute";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import CreateOrder from "./pages/CreateOrder";
@@ -22,7 +23,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -31,12 +32,12 @@ const App = () => (
             <Route path="orders/create" element={<CreateOrder />} />
             <Route path="orders/:orderId" element={<OrderDetails />} />
             <Route path="products" element={<Products />} />
-            <Route path="users" element={<UsersPage />} />
+            <Route path="users" element={<AdminRoute><UsersPage /></AdminRoute>} />
             <Route path="profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

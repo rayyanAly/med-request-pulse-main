@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { loginUser, LoginData } from "@/redux/actions/loginActions";
 import logo from "@/assets/800_Pharmacy_Logo.png";
+import { Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -23,6 +24,7 @@ const Auth = () => {
   const { loading, user, error } = useSelector((state: any) => state.login);
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -91,14 +93,24 @@ const Auth = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="login-password">Password</Label>
-              <Input
-                id="login-password"
-                type="password"
-                placeholder="Enter your password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}

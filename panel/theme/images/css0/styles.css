@@ -1,0 +1,673 @@
+/* Base Styles */
+
+@font-face {
+    font-family: 'Heebo-Light';
+    src: url('../fonts/Heebo-Light.eot?#iefix') format('embedded-opentype'), url('../fonts/Heebo-Light.woff') format('woff'), url('../fonts/Heebo-Light.ttf') format('truetype'), url('../fonts/Heebo-Light.svg#../fonts/Heebo-Light') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Heebo-Regular';
+    src: url('../fonts/Heebo-Regular.eot?#iefix') format('embedded-opentype'), url('../fonts/Heebo-Regular.woff') format('woff'), url('../fonts/Heebo-Regular.ttf') format('truetype'), url('../fonts/Heebo-Regular.svg#../fonts/Heebo-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SourceSansPro-Regular';
+    src: url('../fonts/SourceSansPro-Regular.eot?#iefix') format('embedded-opentype'), url('../fonts/SourceSansPro-Regular.woff') format('woff'), url('../fonts/SourceSansPro-Regular.ttf') format('truetype'), url('../fonts/SourceSansPro-Regular.svg#../fonts/SourceSansPro-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SourceSansPro-SemiBold';
+    src: url('../fonts/SourceSansPro-SemiBold.eot?#iefix') format('embedded-opentype'), url('../fonts/SourceSansPro-SemiBold.woff') format('woff'), url('../fonts/SourceSansPro-SemiBold.ttf') format('truetype'), url('../fonts/SourceSansPro-SemiBold.svg#../fonts/SourceSansPro-SemiBold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SourceSansPro-Bold';
+    src: url('../fonts/SourceSansPro-Bold.eot?#iefix') format('embedded-opentype'), url('../fonts/SourceSansPro-Bold.woff') format('woff'), url('../fonts/SourceSansPro-Bold.ttf') format('truetype'), url('../fonts/SourceSansPro-Bold.svg#../fonts/SourceSansPro-Bold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-family: 'SourceSansPro-Regular';
+    font-size: 16px;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+.container {}
+
+.ico {
+    background: url(../images/sprite.png) no-repeat scroll 0 0 transparent
+}
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0
+}
+
+h1,
+h2,
+h3,
+p {
+    margin: 0;
+    line-height: 100%
+}
+
+a:focus,
+a:hover,
+a:link,
+a:visited {
+    text-decoration: none;
+    color: #2680EB;
+    outline: 0
+}
+
+a:focus,
+a:visited,
+button:focus,
+button:visited {
+    outline: 0
+}
+
+label {
+    cursor: pointer
+}
+
+select {
+    text-transform: capitalize;
+    outline: 0;
+    box-shadow: none;
+    border: 0 !important;
+    background-image: none;
+    color: #000000;
+    font-size: 18px;
+    -moz-appearance: none;
+    -ms-appearance: none;
+    -o-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+select::-ms-expand {
+    display: none
+}
+
+input:focus {
+    outline: 0
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.clear-fix {
+    clear: both
+}
+
+.row {
+    margin: 0
+}
+
+.form-control:focus {
+    box-shadow: none
+}
+
+/* Login Screen Styles*/
+
+.login-view {
+    max-width: 510px;
+    margin: 0 auto;
+    padding-top: 302px;
+}
+
+.login-view h1 {
+    font-family: 'Heebo-Light';
+    color: #45B97C;
+    line-height: 38px;
+    text-align: center;
+}
+
+.login-form {
+    max-width: 464px;
+    text-align: center;
+    margin: 0 auto;
+    padding: 66px 0 238px;
+}
+
+.input-control {
+    margin-bottom: 20px;
+    width: 100%;
+    position: relative;
+    border: 1px solid #E1E8EE;
+    border-radius: 13px;
+    background-color: #f9f9f9;
+    padding: 13px 0 13px 26px;
+    float: left;
+}
+
+.input-field {
+    width: auto;
+    float: left;
+    background: transparent;
+    border: 0 none;
+    padding: 8px 0 0 26px;
+}
+
+.btn-login {
+    font-family: 'Heebo-Regular';
+    border-radius: 36px;
+    background-color: #45B97C;
+    border: 0 none;
+    width: 100%;
+    font-size: 24px;
+    color: #fff;
+    padding: 21px 0 16px;
+    text-transform: capitalize;
+    margin-bottom: 90px;
+}
+
+.login-form a {
+    font-family: 'Heebo-Regular';
+    font-size: 18px;
+    color: #0093EE;
+    text-transform: capitalize;
+}
+
+.input-control span {
+    background-position: 0 0;
+    float: left;
+}
+
+.ico-lock {
+    width: 26px;
+    height: 31px;
+}
+
+.ico-user {
+    width: 28px;
+    height: 30px;
+    background-position: -27px 0 !important;
+}
+
+/* Login Screen Styles */
+
+/* Orders Screen Styles */
+
+.primary-sidebar {
+    float: left;
+    width: 17.5%;
+    height: 100%;
+    transition: all 300ms ease 0ms;
+    border-right: 1px solid #e6eaed;
+}
+
+
+.primary-sidebar.hidden {
+    width: 65px;
+    overflow: hidden;
+    transition: all 300ms ease 0ms;
+}
+
+.dashboard-container {
+    float: left;
+    width: calc(100% - 65px);
+    transition: all 300ms ease 0ms;
+}
+
+.dashboard-container.hidden {
+    width: calc(100% - 17.5%);
+    overflow: hidden;
+    transition: all 300ms ease 0ms;
+}
+
+.menu-wrap {
+    float: left;
+    padding: 30px 0 29px 21px;
+    border-bottom: 1px solid #e6eaed;
+    width: 265px;
+}
+
+.menu-wrap.hidden {
+    overflow: hidden;
+    transition: all 300ms ease 0ms;
+}
+
+.menu-toggle {
+    float: left;
+    padding-top: 4px;
+}
+
+.logo {
+    float: left;
+}
+
+.primary-nav {
+    float: left;
+    width: 100%;
+    padding-top: 38px;
+}
+
+.primary-nav.hidden {
+    overflow: hidden;
+    transition: all 300ms ease 0ms;
+}
+
+.primary-nav.hidden ul {
+    width: 265px;
+    float: left;
+}
+
+.primary-nav ul li {
+    line-height: 100%;
+}
+
+.primary-nav ul li a {
+    padding: 25px 0 25px 17px;
+    float: left;
+    width: 100%;
+    font-size: 20px;
+    color: #43425D;
+    text-transform: capitalize;
+    transition: all 300ms ease 0ms;
+}
+
+.primary-nav ul li a:hover {
+    background-color: #F4F9FF;
+    color: #2680EB;
+}
+
+.primary-nav ul li.active a {
+    background-color: #F4F9FF;
+    color: #2680EB;
+}
+
+.primary-nav ul li a span {
+    margin: -4px 23px 0 0;
+    float: left;
+
+}
+
+.primary-nav ul li a:hover .ico-meter,
+.primary-nav ul li.active .ico-meter {
+    background-position: 0 -171px;
+}
+
+.primary-nav ul li a:hover .ico-orders,
+.primary-nav ul li.active .ico-orders {
+    background-position: -1px -233px;
+}
+
+.primary-nav ul li a:hover .ico-seller,
+.primary-nav ul li.active .ico-seller {
+    background-position: -30px -172px;
+}
+
+.primary-nav ul li a:hover .ico-store,
+.primary-nav ul li.active .ico-store {
+    background-position: 0px -204px;
+}
+
+.primary-nav ul li a:hover .ico-settings,
+.primary-nav ul li.active .ico-settings {
+    background-position: -28px -202px;
+}
+
+.ico-meter {
+    background-position: 0 -55px;
+    width: 28px;
+    height: 22px;
+}
+
+.ico-orders {
+    background-position: -36px -32px;
+    width: 18px;
+    height: 23px;
+    margin: 0 30px 0 4px !important;
+}
+
+.ico-seller {
+    background-position: -31px -56px;
+    width: 24px;
+    height: 27px;
+}
+
+.ico-store {
+    background-position: -1px -88px;
+    width: 28px;
+    height: 25px;
+}
+
+.ico-settings {
+    background-position: -29px -86px;
+    width: 29px;
+    height: 29px;
+}
+
+.btn-menu {
+    float: left;
+    width: 34px;
+    height: 22px;
+    margin-right: 24px;
+    background-position: 0 -33px;
+    background-color: transparent;
+    border: 0 none;
+}
+
+.dashboard-header {
+    border-bottom: 1px solid #e6eaed;
+    float: left;
+    width: 100%;
+}
+
+.db-wrap {
+    padding: 22px 30px 20px 38px;
+    float: left;
+    width: 100%;
+}
+
+.searchbar {
+    float: left;
+    padding-top: 8px;
+}
+
+.ico-search {
+    width: 16px;
+    height: 20px;
+    margin: 4px 13px 0 0;
+    float: left;
+    background-position: -2px -115px;
+    cursor: pointer;
+}
+
+.searchbar .inputfield {
+    border: 0 none;
+}
+
+.searchbar .inputfield::placeholder {
+    font-size: 16px;
+    color: #4D4F5C;
+    text-transform: capitalize;
+}
+
+.user-options-bar {
+    float: right;
+}
+
+.user-control {
+    float: left;
+    padding-top: 10px;
+}
+
+.user-menu {
+    float: left;
+    padding-left: 44px;
+    border-left: 1px solid #e6eaed;
+}
+
+.ico-chat {
+    background-position: -34px -145px;
+    float: left;
+    width: 24px;
+    height: 24px;
+    margin-right: 44px;
+    cursor: pointer;
+}
+
+.ico-notify {
+    background-position: -32px -117px;
+    float: left;
+    width: 24px;
+    height: 24px;
+    margin-right: 21px;
+    cursor: pointer;
+    position: relative;
+}
+
+.notify-bubble {
+    width: 12px;
+    height: 12px;
+    background: #2680EB;
+    border-radius: 100%;
+    position: absolute;
+    top: -7px;
+    right: -4px;
+    border: 2px solid #fff;
+}
+
+.ico-arrow {
+    margin: 9px 14px 0 20px;
+    width: 14px;
+    height: 9px;
+    background-position: -4px -136px;
+    display: inline-block;
+}
+
+.user-menu a {
+    color: #4D4F5C;
+    font-size: 16px;
+    float: left;
+    padding-top: 12px;
+    ;
+}
+
+.dashboard-content-area {
+    float: left;
+    width: 100%;
+    background-color: #fafbfd;
+    padding: 23px 21px 13px 22px;
+}
+
+.content-row {
+    float: left;
+    width: 100%;
+    padding-bottom: 25px;
+    display: flex;
+}
+
+.box:last-child {
+    margin: 0;
+}
+
+.insight-box {
+    text-align: center;
+    width: 24%;
+}
+
+.datepicker {
+    float: right;
+    padding-right: 15px;
+}
+
+.datepicker .calendar{
+  position: absolute;
+    right: 10px;
+    top: 50%;
+    opacity: 0.2;
+    font-size: 14px;
+    margin-top: -8px;
+}
+
+}
+
+.datepicker input {
+    border: 1px solid #E6E9ED;
+    border-radius: 4px;
+    padding: 4px 0 4px 15px;
+}
+
+.box {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #E6E9ED;
+    box-shadow: 0 3px 0 0 rgba(185, 192, 201, 0.24);
+    margin-right: 2%;
+}
+
+.box-head {
+    border-bottom: 1px solid #e6eaed;
+    float: left;
+    width: 100%;
+    padding: 10px 0 11px;
+}
+
+.box-head h2 {
+    font-family: 'SourceSansPro-SemiBold';
+    font-size: 22px;
+    color: #43425D;
+    float: left;
+    padding-left: 30px;
+}
+
+.view-link {
+    float: left;
+    width: 100%;
+}
+
+.view-link a {
+    font-size: 16px;
+    color: #B9C0C9 !important;
+    width: auto;
+    float: right;
+    position: relative;
+    right: 38px;
+    top: -13px;
+}
+
+.ib-content {
+    display: inline-block;
+    padding: 11px 0;
+}
+
+.ib-content img {
+    float: left;
+}
+
+.ib-content h1 {
+    float: left;
+    text-align: left;
+    color: #43425D;
+    font-size: 20px;
+    padding: 19px 0 0 26px;
+}
+
+.insight-count {
+    font-family: 'SourceSansPro-Bold';
+    font-size: 38px;
+    display: block;
+    padding-top: 17px;
+}
+
+.sales-overview .box-head {
+    padding: 22px 0 13px;
+}
+
+.sales-overview h2 {
+    padding: 6px 0 0 36px;
+}
+
+.sales-chart {
+    float: left;
+    padding: 37px 25px;
+    width: 100%;
+}
+
+.sales-overview,
+.top-product {
+    width: 49%;
+}
+
+
+#chart_div {
+    float: left;
+    width: 100%;
+    overflow-y: hidden;
+    resize: horizontal;
+}
+
+.top-areas,
+.top-categories,
+.average-value {
+    width: 33%;
+}
+
+.ta-chart,
+.tc-chart,
+.aov-chart {
+    float: left;
+    width: 100%;
+    overflow-y: hidden;
+    resize: horizontal;
+}
+
+.top-product .box-head {
+    padding: 27px 0 19px;
+}
+
+.tp-table {
+    float: left;
+    width: 100%;
+}
+
+.tp-table table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.tp-table thead,
+.tp-table tbody tr {
+    border-bottom: 1px solid #e6eaed;
+}
+
+.tp-table th {
+    padding: 16px 0;
+    color: #B9C0C9;
+    font-weight: normal;
+    font-size: 18px;
+    text-align: left;
+}
+
+.tp-table tbody td {
+    padding: 15px 0;
+}
+
+.prod-title {
+    float: left;
+    padding-top: 20px;
+}
+
+.tp-table tbody td img {
+    float: left;
+}
+
+.top-areas .box-head,
+.top-categories .box-head,
+.average-value .box-head {
+    padding: 25px 0 21px;
+}
+
+/* Orders Screen Styles */

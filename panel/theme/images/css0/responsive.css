@@ -1,0 +1,123 @@
+/*For Large Desktops*/
+@media all and (max-width:1400px) {}
+
+/* For Laptop */
+@media all and (max-width:1200px) {
+    .ib-content img {
+        float: none;
+    }
+
+    .ib-content h1 {
+        text-align: center;
+        padding: 19px 0 0 0;
+        width: 100%;
+    }
+
+    .view-link {
+        padding: 15px 0;
+    }
+
+    .view-link a {
+        float: none;
+        right: 0;
+        top: 0;
+    }
+}
+
+/* For Tablets */
+@media all and (max-width:992px) {
+    .primary-sidebar {
+        width: 50%;
+        height: 100%;
+        transition: all 300ms ease 0ms;
+        position: fixed;
+        overflow-y: scroll;
+        left: 0;
+        z-index: 1;
+        overflow-x: hidden;
+        background: #fff;
+    }
+
+    .primary-nav ul li a {
+        font-size: 16px;
+    }
+
+    .dashboard-container {
+        float: right;
+    }
+
+    .content-row {
+        display: block;
+    }
+
+    .box {
+        float: left;
+    }
+
+    .insight-box {
+        width: 48%;
+        float: left;
+        margin-bottom: 20px;
+    }
+
+    .sales-overview,
+    .top-product {
+        width: 100%;
+    }
+
+    .top-areas,
+    .top-categories,
+    .average-value {
+        width: 100%;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+}
+
+/* For Mobile */
+@media all and (max-width:767px) {
+
+    .insight-box {
+        width: 100%;
+    }
+
+    .searchbar {
+        width: 100%;
+    }
+
+    .user-options-bar {
+        float: left;
+        clear: both;
+        width: 100%;
+        padding-top: 20px;
+    }
+
+    .user-menu {
+        float: right;
+        padding-left: 0;
+        border-left: 0 none;
+    }
+
+}
+
+/* For Mobile */
+@media all and (max-width:480px) {
+
+    .primary-sidebar {
+        width: 60%;
+    }
+
+    .db-wrap {
+        padding: 22px 10px 20px 10px;
+    }
+
+    .login-view {
+        padding-top: 50px;
+    }
+
+    .login-form {
+        max-width: 100%;
+        margin: 0;
+        padding: 66px 10px;
+    }
+}

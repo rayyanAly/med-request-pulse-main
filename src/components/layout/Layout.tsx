@@ -33,7 +33,7 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "Products", href: "/products", icon: Package },
-  { name: "Users", href: "/users", icon: Users },
+  { name: "Users", href: "/users", icon: Users, requiresAdmin: true },
 ];
 
 export function Layout() {
@@ -43,6 +43,22 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user } = useSelector((state: any) => state.login);
+  
+  // Check if current user is admin from login user data or localStorage
+  let currentUser = user;
+  if (!currentUser) {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        currentUser = JSON.parse(storedUser);
+      } catch {
+        // Invalid user data
+      }
+    }
+  }
+  
+  // Only admin or Super Admin can see admin features
+  const isAdmin = currentUser?.user_type === "admin" || currentUser?.user_type === "Super Admin";
 
   const getDisplayName = () => {
     if (user?.store_name) return user.store_name;
@@ -77,7 +93,7 @@ export function Layout() {
         <div className="h-14 flex items-center justify-center border-b border-border px-2">
           <img
             src={LOGO_URL}
-            alt="800 Pharmacy"
+            alt="800 Med Panel"
             className={cn(
               "object-contain transition-all duration-300",
               sidebarCollapsed ? "h-8" : "h-10"
@@ -87,7 +103,9 @@ export function Layout() {
 
         {/* Navigation Links */}
         <nav className="flex-1 py-2 px-1.5 space-y-0.5 overflow-y-auto">
-          {navigation.map((item) => {
+          {navigation
+            .filter((item) => !item.requiresAdmin || isAdmin)
+            .map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link

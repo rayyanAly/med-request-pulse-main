@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Upload, Plus, X, Eye, FileText, ShoppingCart, Minus, Plus as PlusIcon, Loader2 } from "lucide-react";
+import { Upload, Plus, X, FileText, ShoppingCart, Minus, Plus as PlusIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +18,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProducts } from "@/redux/actions/productActions";
 import { createNewOrder, createOrderReset } from "@/redux/actions/orderActions";
-import { Product, CartItem, PaymentMethod, OrderProductApi, OrderFiles } from "@/api/types";
+import { Product, CartItem, OrderFiles } from "@/api/types";
 import { RootState } from "@/redux/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -36,11 +35,9 @@ const IMAGE_BASE_URL = "https://dashboard.800pharmacy.ae/";
 // Helper to get full image URL
 const getProductImageUrl = (imagePath: string | undefined): string => {
   if (!imagePath) return "/placeholder.svg";
-  // If already a full URL, return as is
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
-  // Prepend the base URL
   return `${IMAGE_BASE_URL}${imagePath}`;
 };
 
@@ -57,19 +54,12 @@ export default function CreateOrder() {
   const [countryCode, setCountryCode] = useState("+971");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [eidNo, setEidNo] = useState("");
+  const [erxNo, setErxNo] = useState("");
   const [notes, setNotes] = useState("");
   
-  // Order Options
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [withInsurance, setWithInsurance] = useState(false);
-  const [withPrescription, setWithPrescription] = useState(false);
-  const [erxNo, setErxNo] = useState("");
-  
   // Files and Products
-  const [prescriptionFiles, setPrescriptionFiles] = useState<File[]>([]); // Up to 3 prescription images
-  const [prescriptionIds, setPrescriptionIds] = useState<string[]>([]); // inserted_id for each file
-  const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
-  const [emiratesIdFile, setEmiratesIdFile] = useState<File | null>(null);
+  const [prescriptionFiles, setPrescriptionFiles] = useState<File[]>([]);
+  const [prescriptionIds, setPrescriptionIds] = useState<string[]>([]);
   const [previewFile, setPreviewFile] = useState<{ name: string; url: string } | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showProductDialog, setShowProductDialog] = useState(false);
@@ -77,7 +67,7 @@ export default function CreateOrder() {
   const [quantity, setQuantity] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [uploadingFiles, setUploadingFiles] = useState(false);
-  const [sessionId] = useState(() => generateSessionId()); // Session ID for temp uploads
+  const [sessionId] = useState(() => generateSessionId());
 
   const countryCodes = [
     { code: "+971", country: "AE", flag: "🇦🇪", name: "UAE" },
@@ -124,17 +114,10 @@ export default function CreateOrder() {
   const addToCart = () => {
     if (!selectedProduct) return;
     
-    // Check stock
     const stock = selectedProduct.available_stock || 0;
     if (quantity > stock) {
       toast.error(`Only ${stock} items available in stock`);
       return;
-    }
-
-    // Auto-enable prescription if product requires it
-    if (selectedProduct.prescription_required === 1 && !withPrescription) {
-      setWithPrescription(true);
-      toast.info("Prescription required for this product - enabled automatically");
     }
 
     const existing = cart.find(item => item.product_id === selectedProduct.product_id);
@@ -191,75 +174,75 @@ export default function CreateOrder() {
 
   const handlePrescriptionChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      const totalFiles = prescriptionFiles.length + newFiles.length;
-      
-      if (totalFiles > 3) {
-        toast.error("Maximum 3 prescription images allowed");
-        return;
-      }
-      
-      // Upload each file immediately via upload_temp
-      setUploadingFiles(true);
-      const newIds: string[] = [];
-      try {
-        for (const file of newFiles) {
-          const result = await uploadTempPrescription(file, sessionId);
-          if (!result.success) {
-            toast.error(`Failed to upload ${file.name}: ${result.error}`);
-            setUploadingFiles(false);
-            return;
-          }
-          // Store the inserted_id for later deletion if needed
-          if (result.data?.inserted_id) {
-            newIds.push(result.data.inserted_id);
-          }
-          toast.success(`${file.name} uploaded successfully`);
-        }
-        // Add files and IDs to state after successful upload
-        setPrescriptionFiles([...prescriptionFiles, ...newFiles]);
-        setPrescriptionIds([...prescriptionIds, ...newIds]);
-      } catch (error: any) {
-        toast.error(`Failed to upload prescription: ${error.message}`);
-      }
-      setUploadingFiles(false);
+      await processPrescriptionFiles(Array.from(e.target.files));
     }
-    // Reset input
     e.target.value = '';
   };
 
-  const handleInsuranceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setInsuranceFile(e.target.files[0]);
+  const processPrescriptionFiles = async (newFiles: File[]) => {
+    const totalFiles = prescriptionFiles.length + newFiles.length;
+    
+    if (totalFiles > 3) {
+      toast.error("Maximum 3 prescription images allowed");
+      return;
     }
+    
+    setUploadingFiles(true);
+    const newIds: string[] = [];
+    try {
+      for (const file of newFiles) {
+        const result = await uploadTempPrescription(file, sessionId);
+        if (!result.success) {
+          toast.error(`Failed to upload ${file.name}: ${result.error}`);
+          setUploadingFiles(false);
+          return;
+        }
+        if (result.data?.inserted_id) {
+          newIds.push(result.data.inserted_id);
+        }
+        toast.success(`${file.name} uploaded successfully`);
+      }
+      setPrescriptionFiles([...prescriptionFiles, ...newFiles]);
+      setPrescriptionIds([...prescriptionIds, ...newIds]);
+    } catch (error: any) {
+      toast.error(`Failed to upload prescription: ${error.message}`);
+    }
+    setUploadingFiles(false);
   };
 
-  const handleEmiratesIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setEmiratesIdFile(e.target.files[0]);
+  const handlePrescriptionDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handlePrescriptionDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const files = Array.from(e.dataTransfer.files).filter(file =>
+      file.type.startsWith('image/') || file.type === 'application/pdf'
+    );
+    
+    if (files.length > 0) {
+      await processPrescriptionFiles(files);
     }
   };
 
   const removePrescription = async (index: number) => {
     const insertedId = prescriptionIds[index];
     
-    // Delete from server if we have an inserted_id
     if (insertedId) {
       try {
         await deleteTempFile(insertedId, sessionId);
         toast.success("File removed successfully");
       } catch (error: any) {
         toast.error(`Failed to delete file: ${error.message}`);
-        // Still remove from local state even if server delete fails
       }
     }
     
-    // Remove from local state
     setPrescriptionFiles(prescriptionFiles.filter((_, i) => i !== index));
     setPrescriptionIds(prescriptionIds.filter((_, i) => i !== index));
   };
-  const removeInsurance = () => setInsuranceFile(null);
-  const removeEmiratesId = () => setEmiratesIdFile(null);
 
   const handlePreviewFile = (file: File) => {
     const url = URL.createObjectURL(file);
@@ -273,20 +256,10 @@ export default function CreateOrder() {
     setPreviewFile(null);
   };
 
-  // Check if cart contains Rx products
-  const cartHasRxProducts = cart.some(item => {
-    const product = reduxProducts.find((p: Product) => p.product_id === item.product_id);
-    return product?.prescription_required === 1;
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
-    if (cart.length === 0) {
-      toast.error("Please add at least one product to the cart");
-      return;
-    }
     if (!firstName.trim()) {
       toast.error("Please enter first name");
       return;
@@ -299,41 +272,26 @@ export default function CreateOrder() {
       toast.error("Please enter contact number");
       return;
     }
-    // Check if prescription is required for cart
-    if (cartHasRxProducts && !withPrescription) {
-      toast.error("Prescription is required for products in cart");
-      return;
-    }
-    if (withPrescription && prescriptionFiles.length === 0 && !erxNo.trim()) {
-      toast.error("Please upload at least one prescription image or enter eRX number");
-      return;
-    }
-
-    // Files are already uploaded via upload_temp when selected
-    // Just create the order with the session ID
+    
+    // Prescription is optional - no longer mandatory even if cart has Rx products
 
     const orderData = {
       first_name: firstName,
       last_name: lastName,
       contact_number: `${countryCode}${phoneNumber}`,
-      payment_method: paymentMethod,
-      with_insurance: withInsurance,
-      with_prescription: withPrescription,
+      with_insurance: false,
+      with_prescription: prescriptionFiles.length > 0 || erxNo.trim() ? true : false,
       products: cart.map(item => ({
         sku: String(item.sku),
         qty: Number(item.qty)
       })),
       eid_no: eidNo || undefined,
-      erx: withPrescription ? erxNo : undefined,
+      erx: erxNo || undefined,
       notes: notes || undefined,
-      session: prescriptionFiles.length > 0 ? sessionId : undefined, // Reference to pre-uploaded files
+      session: prescriptionFiles.length > 0 ? sessionId : undefined,
     };
     
-    // Collect files for upload with proper field names
-    const filesToUpload: OrderFiles = {
-      insurance: insuranceFile || undefined,
-      emirates_id: emiratesIdFile || undefined,
-    };
+    const filesToUpload: OrderFiles = {};
     
     dispatch(createNewOrder(orderData, filesToUpload));
   };
@@ -440,10 +398,18 @@ export default function CreateOrder() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="notes" className="text-xs">Comments</Label>
-                    <span className="text-xs text-amber-600 font-medium">(Visible to customer)</span>
-                  </div>
+                  <Label htmlFor="erx" className="text-xs">eRX Number</Label>
+                  <Input
+                    id="erx"
+                    value={erxNo}
+                    onChange={(e) => setErxNo(e.target.value)}
+                    placeholder="Enter eRX number (optional)"
+                    className="h-9 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="notes" className="text-xs">Notes</Label>
                   <Textarea
                     id="notes"
                     value={notes}
@@ -455,99 +421,28 @@ export default function CreateOrder() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Order Options */}
-            <Card>
-              <CardHeader className="pb-2 pt-4 px-5">
-                <CardTitle className="text-base">Order Options</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4 px-5 space-y-4">
-                {/* Payment Method */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="payment" className="text-xs">Payment Method *</Label>
-                  <Select 
-                    value={paymentMethod} 
-                    onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                  >
-                    <SelectTrigger className="h-9 text-sm w-full max-w-[200px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="min-w-[150px]">
-                       <SelectItem value="cash">Cash on Delivery</SelectItem>
-                       <SelectItem value="card">Card on Delivery</SelectItem>
-                       <SelectItem value="online">Online Payment</SelectItem>
-                       <SelectItem value="paid_already">Paid Already</SelectItem>
-                      </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Insurance Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="insurance" className="text-xs">Insurance</Label>
-                    <p className="text-xs text-muted-foreground">Order has insurance coverage</p>
-                  </div>
-                  <Switch
-                    id="insurance"
-                    checked={withInsurance}
-                    onCheckedChange={setWithInsurance}
-                  />
-                </div>
-
-                {/* Prescription Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="prescription" className="text-xs">Prescription Required</Label>
-                    <p className="text-xs text-muted-foreground">
-                      {cartHasRxProducts ? (
-                        <span className="text-amber-600 font-medium">Required for cart items</span>
-                      ) : (
-                        "Order needs prescription upload"
-                      )}
-                    </p>
-                  </div>
-                  <Switch
-                    id="prescription"
-                    checked={withPrescription}
-                    onCheckedChange={setWithPrescription}
-                    disabled={cartHasRxProducts}
-                  />
-                </div>
-
-                {/* eRX Number (conditional) */}
-                {withPrescription && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="erx" className="text-xs">eRX Number</Label>
-                    <Input
-                      id="erx"
-                      value={erxNo}
-                      onChange={(e) => setErxNo(e.target.value)}
-                      placeholder="Enter eRX number (or upload prescription below)"
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
 
           {/* Right Column */}
           <div className="space-y-4">
-            {/* Prescription Upload */}
-            {withPrescription && (
-              <Card>
-                <CardHeader className="pb-2 pt-4 px-5">
-                  <CardTitle className="text-base flex items-center justify-between">
-                    <span>Upload Prescription</span>
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {prescriptionFiles.length}/3 images
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4 px-5 space-y-3">
-                  {/* Upload area - show if less than 3 files */}
+            {/* Upload Documents */}
+            <Card>
+              <CardHeader className="pb-2 pt-4 px-5">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span>Upload Documents</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {prescriptionFiles.length}/3 images
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4 px-5 space-y-3">
                   {prescriptionFiles.length < 3 && (
-                    <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
+                    <div 
+                      className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer"
+                      onDragOver={handlePrescriptionDragOver}
+                      onDrop={handlePrescriptionDrop}
+                      onClick={() => document.getElementById('prescription-upload')?.click()}
+                    >
                       <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                       <div className="space-y-1">
                         <Label htmlFor="prescription-upload" className="cursor-pointer">
@@ -572,7 +467,6 @@ export default function CreateOrder() {
                     </div>
                   )}
                   
-                  {/* Uploaded files list */}
                   {prescriptionFiles.length > 0 && (
                     <div className="space-y-2">
                       {prescriptionFiles.map((file, index) => (
@@ -611,149 +505,15 @@ export default function CreateOrder() {
                     </div>
                   )}
                   
-                  {/* Upload progress indicator */}
                   {uploadingFiles && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span>Uploading prescription images...</span>
                     </div>
                   )}
-                </CardContent>
-            </Card>
-            )}
-
-            {/* Insurance Upload */}
-            {withInsurance && (
-              <Card>
-                <CardHeader className="pb-2 pt-4 px-5">
-                  <CardTitle className="text-base">Upload Insurance Card</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4 px-5 space-y-3">
-                  {!insuranceFile ? (
-                    <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <div className="space-y-1">
-                        <Label htmlFor="insurance-upload" className="cursor-pointer">
-                          <span className="text-sm text-primary font-medium hover:underline">
-                            Choose file
-                          </span>
-                          {" "}
-                          <span className="text-xs">or drag and drop</span>
-                        </Label>
-                        <p className="text-xs text-muted-foreground">
-                          PNG, JPG, PDF up to 10MB
-                        </p>
-                      </div>
-                      <Input
-                        id="insurance-upload"
-                        type="file"
-                        onChange={handleInsuranceChange}
-                        className="hidden"
-                        accept=".png,.jpg,.jpeg,.pdf"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors group">
-                      <div 
-                        className="h-9 w-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0 cursor-pointer overflow-hidden"
-                        onClick={() => handlePreviewFile(insuranceFile)}
-                      >
-                        {insuranceFile.type.startsWith('image/') ? (
-                          <img 
-                            src={URL.createObjectURL(insuranceFile)} 
-                            alt={insuranceFile.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <FileText className="h-4 w-4 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{insuranceFile.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(insuranceFile.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={removeInsurance}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Emirates ID Upload */}
-            <Card>
-              <CardHeader className="pb-2 pt-4 px-5">
-                <CardTitle className="text-base">Emirates ID (New Customers)</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4 px-5 space-y-3">
-                {!emiratesIdFile ? (
-                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                    <div className="space-y-1">
-                      <Label htmlFor="emirates-id-upload" className="cursor-pointer">
-                        <span className="text-sm text-primary font-medium hover:underline">
-                          Choose file
-                        </span>
-                        {" "}
-                        <span className="text-xs">or drag and drop</span>
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        PNG, JPG, PDF up to 10MB
-                      </p>
-                    </div>
-                    <Input
-                      id="emirates-id-upload"
-                      type="file"
-                      onChange={handleEmiratesIdChange}
-                      className="hidden"
-                      accept=".png,.jpg,.jpeg,.pdf"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 p-2.5 border border-border rounded-lg hover:bg-muted transition-colors group">
-                    <div 
-                      className="h-9 w-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0 cursor-pointer overflow-hidden"
-                      onClick={() => handlePreviewFile(emiratesIdFile)}
-                    >
-                      {emiratesIdFile.type.startsWith('image/') ? (
-                        <img 
-                          src={URL.createObjectURL(emiratesIdFile)} 
-                          alt={emiratesIdFile.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <FileText className="h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{emiratesIdFile.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(emiratesIdFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={removeEmiratesId}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
               </CardContent>
             </Card>
- 
+
             {/* Cart */}
             <Card className="flex-1">
               <CardHeader className="pb-2 pt-4 px-5">
@@ -774,9 +534,9 @@ export default function CreateOrder() {
                   Add Product
                 </Button>
                 {cart.length === 0 ? (
-                  <div className="text-center text-xs text-muted-foreground py-4">
+                  <span className="text-xs text-muted-foreground">
                     No products in cart
-                  </div>
+                  </span>
                 ) : (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {cart.map((item) => {
@@ -1044,4 +804,3 @@ export default function CreateOrder() {
     </div>
   );
 }
-

@@ -5,6 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://800pharmacy.a
 const BASE_URL = import.meta.env.DEV ? '/api/api_panel/v2' : API_BASE_URL;
 const PARTNER_ID = import.meta.env.VITE_PARTNER_ID;
 const REF_ID = import.meta.env.VITE_REF_ID;
+const SECURITY_CODE = import.meta.env.VITE_SECURITY_CODE;
 
 export const apiRequest = async (
   endpoint: string,
@@ -15,6 +16,7 @@ export const apiRequest = async (
   const defaultHeaders: Record<string, string> = {
     'X-Partner-Id': localStorage.getItem('partner_id') || PARTNER_ID,
     'X-Ref-Id': localStorage.getItem('partner_ref_id') || REF_ID,
+    'X-Security-Code': localStorage.getItem('security_code') || SECURITY_CODE,
   };
 
   // Add session token if available
@@ -36,18 +38,38 @@ export const apiRequest = async (
   };
 
   const response = await fetch(url, config);
-  const data = await response.json();
-
+  
+  // Check if response is OK
   if (!response.ok) {
+    // For 500 errors, try to get error text
+    let errorMessage = `HTTP ${response.status}`;
+    try {
+      const errorText = await response.text();
+      if (errorText) {
+        errorMessage = errorText;
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+    
     if (response.status === 401) {
-      // Unauthorized - clear auth and logout
       localStorage.removeItem('session_token');
       localStorage.removeItem('user');
-      // Dispatch logout if store is available, but since this is API layer, redirect to login
       window.location.href = '/auth';
     }
-    throw new Error(data.message || 'API request failed');
+    throw new Error(errorMessage);
   }
 
-  return data;
+  // Try to parse JSON
+  const text = await response.text();
+  if (!text) {
+    return { success: 0, error: 'Empty response from server' };
+  }
+  
+  try {
+    const data = JSON.parse(text);
+    return data;
+  } catch {
+    throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
+  }
 };

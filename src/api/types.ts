@@ -19,6 +19,7 @@ export interface LoginResponse {
     store_name: string;
     store_status: string;
     user_name: string;
+    user_type?: string;
     whatsapp_number?: string | null;
     store_logo?: string | null;
     store_phone?: string | null;
@@ -116,6 +117,12 @@ export interface Order {
   agent_name?: string | null;
   item_total?: number;
   a_notes?: string;
+  // Additional fields from orders API
+  received_at?: string;
+  prepared_at?: string;
+  dispatched?: string;
+  delivered_at?: string;
+  accepted_at?: string;
 }
 
 export interface OrderAttachment {
@@ -149,8 +156,8 @@ export interface CreateOrderRequest {
   // Products array (API format: sku and qty)
   products: OrderProductApi[];
   
-  // Payment method: cash, card, online, pal, paid_already
-  payment_method: string;
+  // Payment method: cash, card, online, pal, paid_already (optional - removed from UI)
+  payment_method?: string;
   
   // Insurance and Prescription flags
   with_insurance: boolean;
@@ -295,6 +302,7 @@ export interface OrderListItem {
   preparedAt?: string;
   dispatchedAt?: string;
   deliveredAt?: string;
+  receivedAt?: string;
 }
 
 // ==================== Response Types ====================
