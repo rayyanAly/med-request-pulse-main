@@ -63,11 +63,15 @@ export const createOrderReset = () => ({
   type: CREATE_ORDER_RESET,
 });
 
-export const fetchAllOrders = () => {
+export const fetchAllOrders = (dateRange?: { startdate?: string; enddate?: string }) => {
   return async (dispatch: Dispatch) => {
     dispatch(fetchOrdersRequest());
     try {
-      const result = await fetchOrders();
+      // Pass date range parameters to API - same as panel
+      const result = await fetchOrders({
+        startdate: dateRange?.startdate,
+        enddate: dateRange?.enddate,
+      });
       if (result.success) {
         const orders = Array.isArray(result.data)
           ? result.data

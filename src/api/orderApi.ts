@@ -17,6 +17,8 @@ import {
 /**
  * Fetch all orders with optional filters
  * GET /?c=orders&m=index
+ * 
+ * Date range parameters (like panel): startdate, enddate
  */
 export const fetchOrders = async (filters?: {
   limit?: number;
@@ -24,6 +26,8 @@ export const fetchOrders = async (filters?: {
   sort?: string;
   orderby?: string;
   customer?: string;
+  startdate?: string;  // Date range start (YYYY-MM-DD format)
+  enddate?: string;   // Date range end (YYYY-MM-DD format)
 }): Promise<ApiResponse<Order[]>> => {
   const params = new URLSearchParams();
   if (filters?.limit) params.append('limit', String(filters.limit));
@@ -31,6 +35,10 @@ export const fetchOrders = async (filters?: {
   if (filters?.sort) params.append('sort', filters.sort);
   if (filters?.orderby) params.append('orderby', filters.orderby);
   if (filters?.customer) params.append('customer', filters.customer);
+  
+  // Date range parameters - same as panel
+  if (filters?.startdate) params.append('startdate', filters.startdate);
+  if (filters?.enddate) params.append('enddate', filters.enddate);
 
   const query = params.toString();
   return apiRequest(`/?c=orders&m=index${query ? `&${query}` : ''}`);

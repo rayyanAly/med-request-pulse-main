@@ -179,10 +179,11 @@ export default function OrderDetails() {
     return totalItem?.value || 0;
   };
 
-  // Check if order can be cancelled (order_status_id < 3)
+  // Check if order can be cancelled (order_status_id <= 3 - same as panel)
   const canCancelOrder = () => {
     const statusId = parseInt(order.order_status_id || '0', 10);
-    return statusId < 3 && order.cancel_key && order.order_status !== 'Cancelled';
+    // Panel allows cancel for status_id 1, 2, 3 (New Order, Under Process, Ready for Dispatch)
+    return statusId <= 3 && order.cancel_key && order.order_status !== 'Cancelled';
   };
 
   // Clean comment by converting <br /> tags to newlines (backend adds ERX with br tag)
@@ -192,14 +193,14 @@ export default function OrderDetails() {
     return comment.replace(/<br\s*\/?>/gi, '\n').trim();
   };
 
-  // Handle cancel order
+  // Handle cancel order - use order.order_id (external ID) not orderId (internal ID)
   const handleCancelOrder = () => {
-    if (!order.cancel_key || !orderId) {
-      toast.error("Cannot cancel order: missing cancel key");
+    if (!order.cancel_key || !order.order_id) {
+      toast.error("Cannot cancel order: missing cancel key or order ID");
       return;
     }
     
-    dispatch(cancelOrderById(orderId, order.cancel_key));
+    dispatch(cancelOrderById(order.order_id, order.cancel_key));
   };
 
   return (

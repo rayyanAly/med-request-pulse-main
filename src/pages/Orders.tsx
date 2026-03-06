@@ -25,10 +25,21 @@ export default function Orders() {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchAllOrders());
+    // Get default date range (last 30 days like panel)
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const defaultDateRange = {
+      startdate: format(thirtyDaysAgo, 'yyyy-MM-dd'),
+      enddate: format(now, 'yyyy-MM-dd'),
+    };
+    
+    // Initial fetch with default date range - same as panel
+    dispatch(fetchAllOrders(defaultDateRange));
   }, [dispatch]);
 
-  // Filter orders by search term (name and phone)
+  // Filter orders by search term (name and phone) - client-side
   const searchFilteredOrders = useMemo(() => {
     if (!searchTerm.trim()) return orders;
     const term = searchTerm.toLowerCase();
@@ -39,32 +50,10 @@ export default function Orders() {
     });
   }, [orders, searchTerm]);
 
-  // Filter by date range
-  const dateFilteredOrders = useMemo(() => {
-    if (!dateRange?.from && !dateRange?.to) return searchFilteredOrders;
-    return searchFilteredOrders.filter((order: any) => {
-      if (!order.date_added) return false;
-      // Parse date format DD/MM/YYYY HH:mm:ss
-      const datePart = order.date_added.split(' ')[0];
-      const [day, month, year] = datePart.split('/');
-      const orderDate = new Date(`${year}-${month}-${day}`);
-      
-      if (dateRange?.from) {
-        if (orderDate < dateRange.from) return false;
-      }
-      if (dateRange?.to) {
-        const endDate = new Date(dateRange.to);
-        endDate.setHours(23, 59, 59, 999);
-        if (orderDate > endDate) return false;
-      }
-      return true;
-    });
-  }, [searchFilteredOrders, dateRange]);
-
-  // Filter by status
+  // Filter by status (client-side)
   const statusFilteredOrders = useMemo(() => {
-    if (statusFilter === "all") return dateFilteredOrders;
-    return dateFilteredOrders.filter((order: any) => {
+    if (statusFilter === "all") return searchFilteredOrders;
+    return searchFilteredOrders.filter((order: any) => {
       const status = order.order_status;
       if (statusFilter === "new") return status === "New Order";
       if (statusFilter === "process") return status === "Under Process";
@@ -76,7 +65,7 @@ export default function Orders() {
       if (statusFilter === "hold") return status === "On Hold";
       return true;
     });
-  }, [dateFilteredOrders, statusFilter]);
+  }, [searchFilteredOrders, statusFilter]);
 
   // Paginate
   const totalPages = Math.ceil(statusFilteredOrders.length / ITEMS_PER_PAGE);
@@ -88,7 +77,7 @@ export default function Orders() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, dateRange, statusFilter]);
+  }, [statusFilter]);
 
   // Format date range for display
   const formatDateRange = () => {
@@ -97,19 +86,33 @@ export default function Orders() {
     return `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`;
   };
 
-  // Apply date range and close popover
+  // Apply date range and fetch from API (server-side filtering - same as panel)
   const applyDateRange = () => {
+    if (dateRange?.from && dateRange?.to) {
+      const dateRangeParams = {
+        startdate: format(dateRange.from, 'yyyy-MM-dd'),
+        enddate: format(dateRange.to, 'yyyy-MM-dd'),
+      };
+      // Fetch orders from API with date range - server-side filtering
+      dispatch(fetchAllOrders(dateRangeParams));
+    } else {
+      // No date range - fetch all
+      dispatch(fetchAllOrders());
+    }
     setCalendarOpen(false);
   };
 
-  // Clear date range
+  // Clear date range and fetch all orders
   const clearDateRange = () => {
     setDateRange(undefined);
+    // Fetch all orders without date filter
+    dispatch(fetchAllOrders());
     setCalendarOpen(false);
   };
 
   // Export orders to Excel with proper column widths
   const exportToCSV = () => {
+    // Export only the currently filtered orders (respects date range from server)
     const ordersToExport = statusFilteredOrders;
     
     if (ordersToExport.length === 0) {

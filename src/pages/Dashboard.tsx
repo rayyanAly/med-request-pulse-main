@@ -1,11 +1,16 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { ShoppingCart, RefreshCw, TrendingUp, Users, Clock } from "lucide-react";
+import { ShoppingCart, RefreshCw, TrendingUp, Users, Clock, Calendar as CalendarIcon, X } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchAllOrders } from "@/redux/actions/orderActions";
 import { Order } from "@/api/types";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 // Format number with K (thousands) and M (millions) abbreviations
 function formatCompactNumber(num: number): string {
@@ -49,6 +54,31 @@ export default function Dashboard() {
   const { orders, loading: ordersLoading } = useSelector((state: any) => state.orders);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  // Get default date range (last 30 days like panel)
+  const getDefaultDateRange = useCallback(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return {
+      from: thirtyDaysAgo,
+      to: now,
+    };
+  }, []);
+
+  // Initialize with default 30-day range
+  useEffect(() => {
+    const defaultRange = getDefaultDateRange();
+    setDateRange(defaultRange);
+    
+    // Fetch orders with initial date range
+    dispatch(fetchAllOrders({
+      startdate: format(defaultRange.from, 'yyyy-MM-dd'),
+      enddate: format(defaultRange.to, 'yyyy-MM-dd'),
+    }));
+  }, [dispatch, getDefaultDateRange]);
 
   // Calculate unique customers from orders using normalized phone numbers
   const uniqueCustomers = useMemo(() => {
@@ -87,10 +117,10 @@ export default function Dashboard() {
     }, 0);
   }, [completedOrders]);
 
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (dateRangeParams?: { startdate?: string; enddate?: string }) => {
     setRefreshing(true);
     try {
-      await dispatch(fetchAllOrders());
+      await dispatch(fetchAllOrders(dateRangeParams));
     } catch (err) {
       console.error("Failed to load dashboard:", err);
     } finally {
@@ -98,14 +128,37 @@ export default function Dashboard() {
     }
   }, [dispatch]);
 
-  useEffect(() => {
-    loadAll();
-    
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(loadAll, 30000);
-    
-    return () => clearInterval(interval);
-  }, [loadAll]);
+  // Removed polling - now only load on date range change or manual refresh
+
+  // Format date range for display
+  const formatDateRange = () => {
+    if (!dateRange?.from) return "Select date range";
+    if (!dateRange.to) return format(dateRange.from, "dd/MM/yyyy");
+    return `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`;
+  };
+
+  // Apply date range and fetch orders (server-side filtering)
+  const applyDateRange = () => {
+    if (dateRange?.from && dateRange?.to) {
+      const dateRangeParams = {
+        startdate: format(dateRange.from, 'yyyy-MM-dd'),
+        enddate: format(dateRange.to, 'yyyy-MM-dd'),
+      };
+      loadAll(dateRangeParams);
+    }
+    setCalendarOpen(false);
+  };
+
+  // Clear date range and fetch default 30 days
+  const clearDateRange = () => {
+    const defaultRange = getDefaultDateRange();
+    setDateRange(defaultRange);
+    loadAll({
+      startdate: format(defaultRange.from, 'yyyy-MM-dd'),
+      enddate: format(defaultRange.to, 'yyyy-MM-dd'),
+    });
+    setCalendarOpen(false);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -166,14 +219,56 @@ export default function Dashboard() {
             Welcome back! Here's an overview of your pharmacy operations
           </p>
         </div>
-        <button
-          onClick={loadAll}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Date Range Picker */}
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={`justify-start text-left font-normal ${!dateRange?.from && "text-muted-foreground"}`}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formatDateRange()}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                initialFocus
+              />
+              <div className="flex justify-end gap-2 p-3 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearDateRange}
+                >
+                  Clear
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={applyDateRange}
+                >
+                  Apply
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          <button
+            onClick={() => loadAll(dateRange?.from && dateRange?.to ? {
+              startdate: format(dateRange.from, 'yyyy-MM-dd'),
+              enddate: format(dateRange.to, 'yyyy-MM-dd'),
+            } : undefined)}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
