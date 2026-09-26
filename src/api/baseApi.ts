@@ -55,7 +55,7 @@ export const apiRequest = async (
     if (response.status === 401) {
       localStorage.removeItem('session_token');
       localStorage.removeItem('user');
-      window.location.href = '/auth';
+      window.location.hash = '/auth';
     }
     throw new Error(errorMessage);
   }
