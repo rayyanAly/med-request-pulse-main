@@ -26,8 +26,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { logout } from "@/redux/actions/loginActions";
 import { Outlet } from "react-router-dom";
-
-const LOGO_URL = "https://800pharmacy.ae/assets/images/logo.svg";
+import logo from "@/assets/800_Pharmacy_Logo.png";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -92,7 +91,7 @@ export function Layout() {
         {/* Logo Header */}
         <div className="h-14 flex items-center justify-center border-b border-border px-2">
           <img
-            src={LOGO_URL}
+            src={logo}
             alt="800 Med Panel"
             className={cn(
               "object-contain transition-all duration-300",
