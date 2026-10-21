@@ -24,14 +24,43 @@ const HTTP_ERROR_MESSAGES: Record<number, string> = {
 };
 
 const INTERNAL_ERROR_PATTERN =
-  /<\/?(?:html|head|body|script|style|pre|br|b)\b|<!doctype|fatal error|parse error|stack trace|sqlstate|pdoexception|uncaught exception|undefined (?:index|variable)|\bnginx\b|\bapache\b|\bin \/[^\s]+\.php\b|\bon line \d+\b/i;
+  /<\/?(?:html|head|body|script|style|pre|br|b)\b|<!doctype|fatal error|parse error|stack trace|sqlstate|pdoexception|uncaught exception|(?:type|reference|syntax|range)error|undefined (?:index|variable)|\bnginx\b|\bapache\b|\bin \/[^\s]+\.php\b|\bon line \d+\b/i;
 
-const getSafeApiMessage = (value: unknown, fallback = DEFAULT_API_ERROR) => {
+const getSafeApiMessage = (
+  value: unknown,
+  fallback = DEFAULT_API_ERROR,
+  depth = 0
+): string => {
+  if (depth > 3 || value == null) return fallback;
+
+  if (typeof value === "object") {
+    if (Array.isArray(value)) return fallback;
+
+    const nestedValue = (value as Record<string, unknown>).message ??
+      (value as Record<string, unknown>).error ??
+      (value as Record<string, unknown>).detail;
+
+    return getSafeApiMessage(nestedValue, fallback, depth + 1);
+  }
+
   if (typeof value !== "string") return fallback;
 
   const message = value.replace(/\s+/g, " ").trim();
   if (!message || message.length > 240 || INTERNAL_ERROR_PATTERN.test(message)) {
     return fallback;
+  }
+
+  // Some backend responses contain a second JSON document inside the
+  // message/error field. Never render that serialized value directly.
+  if (
+    (message.startsWith("{") && message.endsWith("}")) ||
+    (message.startsWith("[") && message.endsWith("]"))
+  ) {
+    try {
+      return getSafeApiMessage(JSON.parse(message), fallback, depth + 1);
+    } catch {
+      return fallback;
+    }
   }
 
   return message;
@@ -44,13 +73,25 @@ const sanitizeFailureResponse = (data: any) => {
     data.success === 0 ||
     data.success === "0" ||
     data.success === false ||
-    data.status === "error";
+    data.status === "error" ||
+    data.status === "failed" ||
+    (data.success == null && data.error != null);
 
-  if (!isFailure) return data;
+  const sanitizedData = { ...data };
+
+  if (data.message != null) {
+    sanitizedData.message = getSafeApiMessage(data.message);
+  }
+
+  if (data.error != null) {
+    sanitizedData.error = getSafeApiMessage(data.error);
+  }
+
+  if (!isFailure) return sanitizedData;
 
   const safeMessage = getSafeApiMessage(data.message ?? data.error);
   return {
-    ...data,
+    ...sanitizedData,
     message: safeMessage,
     error: safeMessage,
   };
